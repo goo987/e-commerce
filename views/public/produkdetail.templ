@@ -1,0 +1,276 @@
+package public
+
+import (
+	"e-commerce/internal/repository"
+	"fmt"
+	"strconv"
+)
+
+script buyNow(productID string, isLoggedIn bool) {
+    window.buyNow(productID, isLoggedIn);
+}
+
+script handleAddToCart(isLoggedIn bool) {
+	addToCart(event, isLoggedIn);
+}
+
+templ ProdukDetail(product repository.Product, shippingCost int, isLoggedIn bool) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ product.Name } - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+			<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-header': '#FDF9D3',
+                                'h-gold': '#A37E2C',
+                                'h-yellow-cart': '#FFD18C',
+                                'h-yellow-soft': '#FFF9A6'
+                            },
+                            fontFamily: {
+                                sans: ['Poppins', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+
+                // Fungsi utama untuk menangani Add to Cart dan Beli Sekarang
+                async function processCartAction(form, loggedIn, isDirectCheckout = false) {
+                    if (!loggedIn) {
+                        window.location.href = "/register";
+                        return;
+                    }
+
+                    const formData = new FormData(form);
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            if (isDirectCheckout) {
+                                // Jika klik "Beli Sekarang", langsung ke checkout
+                                window.location.href = "/checkout?ids=" + formData.get("product_id");
+                            } else {
+                                // Jika klik "Masukkan ke Keranjang", tampilkan toast sukses
+                                Swal.fire({
+                                    html: `
+                                        <div class="flex flex-col items-center p-4">
+                                            <div class="bg-black/70 rounded-2xl p-6 flex flex-col items-center shadow-2xl">
+                                                <i class="fas fa-check-circle text-5xl text-h-yellow-cart mb-3"></i>
+                                                <p class="text-white font-medium text-lg">Berhasil ditambahkan</p>
+                                            </div>
+                                        </div>
+                                    `,
+                                    showConfirmButton: false,
+                                    timer: 1000,
+                                    background: 'transparent',
+                                    backdrop: 'rgba(0,0,0,0.1)'
+                                });
+                            }
+                        } else if (response.status === 401) {
+                            window.location.href = "/register";
+                        } else {
+                            const errorMsg = await response.text();
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Info',
+                                text: errorMsg || 'Gagal memproses permintaan',
+                                confirmButtonColor: '#A37E2C'
+                            });
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'Terjadi kesalahan koneksi', 'error');
+                    }
+                }
+
+                async function addToCart(event, loggedIn) {
+                    event.preventDefault();
+                    await processCartAction(event.target, loggedIn, false);
+                }
+
+                async function buyNow(productId, loggedIn) {
+                    // Cari form yang ada untuk mengambil data (product_id & qty)
+                    const form = document.querySelector('form[action="/keranjang/add"]');
+                    if (form) {
+                        await processCartAction(form, loggedIn, true);
+                    }
+                }
+            </script>
+			<style>
+                .custom-box-shadow {
+                    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                }
+                .box-shadow-card {
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+                }
+                .swal2-popup {
+                    padding: 0 !important;
+                    width: auto !important;
+                }
+            </style>
+		</head>
+		<body class="bg-white font-sans text-gray-800">
+			<header class="bg-h-header border-b border-gray-100 py-3 px-10 mb-6">
+				<div class="max-w-7xl mx-auto flex justify-between items-center">
+					<div class="flex items-center gap-3">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-bold text-2xl tracking-wide uppercase">HOSTEL MART</span>
+					</div>
+				</div>
+			</header>
+			<main class="max-w-7xl mx-auto px-10 pb-20">
+				<div class="mb-10">
+					<a href="/" class="inline-flex items-center gap-2 bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 px-8 py-3 rounded-xl font-bold transition text-sm text-black shadow-[0_4px_0_0_rgba(202,138,4,0.2)] active:translate-y-[2px] active:shadow-none">
+						<i class="fas fa-arrow-left"></i> Kembali
+					</a>
+				</div>
+				<div class="flex flex-col lg:flex-row gap-12 items-start">
+					<div class="w-full lg:w-[420px] shrink-0">
+						<div class="bg-white border border-gray-300 rounded-2xl flex items-center justify-center p-10 box-shadow-card aspect-[4/5]">
+							if product.Image != "" {
+								<img src={ "/image/" + product.Image } alt={ product.Name } class="max-h-full max-w-full object-contain"/>
+							} else {
+								<i class="fas fa-image text-8xl text-gray-200"></i>
+							}
+						</div>
+					</div>
+					<div class="flex-1">
+						<div class="flex flex-col lg:flex-row gap-6">
+							<div class="flex-1">
+								<h1 class="text-4xl font-bold text-black mb-1">{ product.Name }</h1>
+								<div class="flex items-center gap-4 mb-6">
+									<div class="flex text-yellow-400 text-xl items-center gap-1">
+										for i := 1; i <= 5; i++ {
+											if float64(i) <= product.Rating {
+												<i class="fas fa-star"></i>
+											} else {
+												<i class="far fa-star"></i>
+											}
+										}
+										<span class="ml-1 text-gray-700 font-bold text-lg">{ fmt.Sprintf("%.1f", product.Rating) }</span>
+									</div>
+									<span class="text-gray-400 text-xs">( { strconv.Itoa(product.TotalReview) } ulasan )</span>
+									<div class="h-4 w-[1px] bg-gray-300 mx-1"></div>
+									<span class="text-sm font-medium text-gray-600">
+										Stok: 
+										if product.Stock > 0 {
+											<span class="text-h-gold font-bold">{ strconv.Itoa(product.Stock) }</span>
+										} else {
+											<span class="text-red-500 font-bold">Habis</span>
+										}
+									</span>
+								</div>
+								<p class="text-gray-700 text-sm leading-relaxed mb-8">
+									{ product.Name } dengan warna dan desain minimalis, simple dan nyaman dipakai dan cocok sesuai kebutuhan anda.
+								</p>
+								<div class="mb-10">
+									<h2 class="text-xl font-bold text-gray-900 mb-4">Deskripsi Produk</h2>
+									<div class="text-gray-600 text-sm leading-7 whitespace-pre-line">
+										{ product.Description }
+									</div>
+								</div>
+							</div>
+							<div class="w-full lg:w-80 shrink-0">
+								<div class="bg-white border border-gray-300 rounded-2xl p-6 box-shadow-card">
+									<h3 class="text-md font-bold mb-6 text-gray-800">Informasi Pengiriman</h3>
+									<div class="space-y-6">
+										<div class="flex justify-between text-sm">
+											<span class="text-gray-500 font-medium">Subtotal :</span>
+											<span class="font-bold text-gray-800">Rp { strconv.Itoa(product.Price) }</span>
+										</div>
+										<div class="flex justify-between text-sm">
+											<span class="text-gray-500 font-medium">Ongkos Kirim :</span>
+											<span class="font-bold text-gray-800">Rp { strconv.Itoa(shippingCost) }</span>
+										</div>
+										<div class="pt-6 border-t border-gray-100 flex justify-between items-center mt-6">
+											<span class="font-bold text-gray-900">Total :</span>
+											<span class="font-bold text-gray-900 text-lg">Rp { strconv.Itoa(product.Price + shippingCost) }</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="flex flex-col gap-3 mt-8 max-w-2xl">
+							<form action="/keranjang/add" method="POST" onsubmit={ handleAddToCart(isLoggedIn) } class="flex flex-col sm:flex-row items-center gap-4 w-full">
+								<input type="hidden" name="product_id" value={ strconv.Itoa(product.ID) }/>
+								<input type="hidden" name="qty" value="1"/>
+								<div class="flex items-center border border-gray-300 rounded-lg h-12 bg-white custom-box-shadow px-5 w-full sm:w-[260px]">
+									<span class="text-black text-base font-medium">Harga :</span>
+									<span class="font-bold text-black text-base ml-auto">Rp { strconv.Itoa(product.Price) }</span>
+								</div>
+								if product.Stock <= 0 {
+									<button type="button" disabled class="w-full sm:w-[300px] flex items-center justify-center gap-3 bg-gray-100 text-gray-400 font-semibold h-12 px-8 rounded-lg border border-gray-200 cursor-not-allowed shrink-0">
+										<i class="fas fa-ban text-lg"></i>
+										<span class="text-base">Produk Habis</span>
+									</button>
+								} else {
+									<button type="submit" class="w-full sm:w-[300px] flex items-center justify-center gap-3 bg-h-yellow-cart hover:brightness-95 text-black font-semibold h-12 px-8 rounded-lg custom-box-shadow transition active:translate-y-0.5 border border-gray-400 shrink-0">
+										<i class="fas fa-shopping-cart text-lg"></i>
+										<span class="text-base">Masukkan ke Keranjang</span>
+									</button>
+								}
+							</form>
+							if product.Stock > 0 {
+								<div class="flex flex-col sm:flex-row items-center gap-4 w-full">
+									<div class="hidden sm:block w-[260px]"></div>
+									<button
+										type="button"
+										onclick={ buyNow(strconv.Itoa(product.ID), isLoggedIn) }
+										class="w-full sm:w-[300px] flex items-center justify-center gap-3 bg-h-yellow-cart hover:brightness-95 text-black font-semibold h-12 px-8 rounded-lg custom-box-shadow transition active:translate-y-0.5 border border-gray-400 shrink-0 cursor-pointer"
+									>
+										<span class="text-base">Beli Sekarang</span>
+									</button>
+								</div>
+							}
+						</div>
+					</div>
+				</div>
+				<div class="mt-20 border-t border-gray-100 pt-12">
+					<h2 class="text-2xl font-bold text-gray-900 mb-8">Ulasan Pembeli ({ strconv.Itoa(product.TotalReview) })</h2>
+					if len(product.Reviews) == 0 {
+						<div class="bg-gray-50 rounded-2xl p-10 text-center">
+							<i class="fas fa-comment-slash text-4xl text-gray-300 mb-3"></i>
+							<p class="text-gray-500">Belum ada ulasan untuk produk ini.</p>
+						</div>
+					} else {
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							for _, rev := range product.Reviews {
+								<div class="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+									<div class="flex justify-between items-start mb-4">
+										<div>
+											<p class="font-bold text-gray-900">{ rev.UserName }</p>
+											<div class="flex text-yellow-400 text-xs mt-1">
+												for r := 1; r <= 5; r++ {
+													if r <= rev.Rating {
+														<i class="fas fa-star"></i>
+													} else {
+														<i class="far fa-star"></i>
+													}
+												}
+											</div>
+										</div>
+										<span class="text-gray-400 text-xs">{ rev.CreatedAt }</span>
+									</div>
+									<p class="text-gray-600 text-sm italic leading-relaxed">
+										"{ rev.Comment }"
+									</p>
+								</div>
+							}
+						</div>
+					}
+				</div>
+			</main>
+		</body>
+	</html>
+}

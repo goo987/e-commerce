@@ -1,0 +1,200 @@
+package admin
+
+import (
+	"e-commerce/internal/repository"
+	"e-commerce/views/layouts"
+	"fmt"
+)
+
+templ Produk(produkList []repository.Product) {
+	@layouts.BaseAdmin("Hostel Mart - Admin Produk", "produk") {
+		<div 
+			x-data="{
+				openModal: false,
+				editModal: false,
+				activeDropdown: null,
+				search: '',
+				editId: '',
+				editNama: '',
+				editStok: '',
+				editHarga: '',
+				editGambar: '',
+				editDeskripsi: ''
+			}"
+			@click="activeDropdown = null"
+		>
+			<div class="space-y-6">
+				<div class="flex justify-between items-center">
+					<h2 class="text-2xl font-bold text-gray-800">Manajemen Produk</h2>
+				</div>
+				
+				<div class="bg-white rounded-2xl border border-gray-200 custom-shadow overflow-hidden">
+					<div class="p-6 flex justify-between items-center border-b border-gray-100 bg-white">
+						<div class="relative w-80">
+							<span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+								<i class="fas fa-search"></i>
+							</span>
+							<input 
+								type="text" 
+								x-model="search" 
+								placeholder="Cari Produk..." 
+								class="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-1 focus:ring-brand-gold outline-none transition-all"
+							/>
+						</div>
+						<button @click="openModal = true; $refs.addForm.reset()" class="bg-white border border-gray-200 px-6 py-2.5 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 shadow-sm transition-all active:scale-95">
+							Tambah Produk <i class="fas fa-plus text-xs"></i>
+						</button>
+					</div>
+
+					<div class="overflow-x-auto">
+						<table class="w-full text-left border-collapse">
+							<thead class="bg-gray-50/50 text-gray-800 text-sm font-bold border-b border-gray-100">
+								<tr>
+									<th class="px-8 py-5">Nama Produk</th>
+									<th class="px-8 py-5">Stok</th>
+									<th class="px-8 py-5">Harga</th>
+									<th class="px-8 py-5 text-center">Action</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-100 text-sm">
+								for index, p := range produkList {
+									<tr 
+										x-show={ fmt.Sprintf("'%s'.toLowerCase().includes(search.toLowerCase())", p.Name) }
+										class="hover:bg-yellow-50/30 transition-colors group"
+									>
+										<td class="px-8 py-5">
+											<div class="flex items-center gap-4">
+												<div class="w-20 h-20 rounded-lg border border-gray-100 overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center">
+													if p.Image != "" {
+														<img src={ "/image/" + p.Image } alt="produk" class="w-full h-full object-cover"/>
+													} else {
+														<div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+															<i class="fas fa-image"></i>
+														</div>
+													}
+												</div>
+												<span class="font-bold text-gray-800 group-hover:text-brand-gold transition-colors">{ p.Name }</span>
+											</div>
+										</td>
+										<td class="px-8 py-5 text-gray-600 font-medium">
+											<span class="bg-gray-100 px-3 py-1 rounded-full text-xs">{ fmt.Sprintf("%d", p.Stock) } unit</span>
+										</td>
+										<td class="px-8 py-5 text-gray-600 font-medium">
+											{ fmt.Sprintf("Rp %d", p.Price) }
+										</td>
+										<td class="px-8 py-5 text-center relative">
+											<button
+												@click.stop={ fmt.Sprintf("activeDropdown = (activeDropdown === %d ? null : %d)", index, index) }
+												class="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-gray-200 hover:bg-white hover:shadow-sm transition-all"
+											>
+												<i class="fas fa-pen text-xs text-gray-500"></i>
+											</button>
+											<div
+												x-show={ fmt.Sprintf("activeDropdown === %d", index) }
+												x-transition:enter="transition ease-out duration-100"
+												x-transition:enter-start="transform opacity-0 scale-95"
+												x-transition:enter-end="transform opacity-100 scale-100"
+												class="absolute right-12 bottom-4 w-36 bg-white rounded-xl shadow-xl border border-gray-100 z-30 py-2 overflow-hidden"
+												style="display: none;"
+											>
+												<button
+													@click={ fmt.Sprintf("editModal=true; editId='%d'; editNama=`%s`; editStok='%d'; editHarga='%d'; editGambar=`%s`; editDeskripsi=`%s`", p.ID, p.Name, p.Stock, p.Price, p.Image, p.Description) }
+													class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+												>
+													<i class="fas fa-edit text-blue-500 w-4"></i> Edit
+												</button>
+												<a
+													href={ templ.SafeURL(fmt.Sprintf("/admin/produk/delete?id=%d", p.ID)) }
+													onclick="return confirm('Hapus produk ini?')"
+													class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+												>
+													<i class="fas fa-trash text-red-500 w-4"></i> Hapus
+												</a>
+											</div>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div x-show="openModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-[60] backdrop-blur-sm" style="display: none;" x-transition>
+				<div @click.away="openModal = false" class="bg-white w-full max-w-lg rounded-3xl p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+					<div>
+						<h2 class="text-2xl font-bold text-gray-800">Tambah Produk Baru</h2>
+						<p class="text-sm text-gray-500">Masukkan detail produk dengan lengkap.</p>
+					</div>
+					<form x-ref="addForm" method="POST" action="/admin/produk/create" enctype="multipart/form-data" class="space-y-4">
+						<div>
+							<label class="text-xs font-bold text-gray-500 uppercase ml-1">Nama Produk</label>
+							<input name="name" required placeholder="Isi nama produk" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+						</div>
+						<div>
+							<label class="text-xs font-bold text-gray-500 uppercase ml-1">Deskripsi Produk</label>
+							<textarea name="description" rows="3" placeholder="Jelaskan detail produk" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1 resize-none"></textarea>
+						</div>
+						<div class="grid grid-cols-2 gap-4">
+							<div>
+								<label class="text-xs font-bold text-gray-500 uppercase ml-1">Stok</label>
+								<input name="stock" type="number" required placeholder="0" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+							</div>
+							<div>
+								<label class="text-xs font-bold text-gray-500 uppercase ml-1">Harga (Rp)</label>
+								<input name="price" type="number" required placeholder="0" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+							</div>
+						</div>
+						<div>
+							<label class="text-xs font-bold text-gray-500 uppercase ml-1">Gambar Produk</label>
+							<input type="file" name="image" accept="image/*" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+						</div>
+						<div class="flex justify-end gap-3 pt-2">
+							<button type="button" @click="openModal = false; $refs.addForm.reset()" class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-all">Batal</button>
+							<button type="submit" class="px-8 py-3 bg-brand-gold text-white rounded-xl font-bold hover:bg-yellow-600 shadow-lg shadow-yellow-600/20 transition-all active:scale-95">Simpan Produk</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<div x-show="editModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-[60] backdrop-blur-sm" style="display: none;" x-transition>
+				<div @click.away="editModal = false" class="bg-white w-full max-w-lg rounded-3xl p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+					<div>
+						<h2 class="text-2xl font-bold text-gray-800">Edit Data Produk</h2>
+						<p class="text-sm text-gray-500">Perbarui informasi detail produk.</p>
+					</div>
+					<form method="POST" action="/admin/produk/update" enctype="multipart/form-data" class="space-y-4">
+						<input type="hidden" name="id" :value="editId"/>
+						<input type="hidden" name="old_image" :value="editGambar"/>
+						<div>
+							<label class="text-xs font-bold text-gray-500 uppercase ml-1">Nama Produk</label>
+							<input name="name" x-model="editNama" required class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+						</div>
+						<div>
+							<label class="text-xs font-bold text-gray-500 uppercase ml-1">Deskripsi Produk</label>
+							<textarea name="description" x-model="editDeskripsi" rows="3" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1 resize-none"></textarea>
+						</div>
+						<div class="grid grid-cols-2 gap-4">
+							<div>
+								<label class="text-xs font-bold text-gray-500 uppercase ml-1">Stok</label>
+								<input name="stock" type="number" x-model="editStok" required class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+							</div>
+							<div>
+								<label class="text-xs font-bold text-gray-500 uppercase ml-1">Harga (Rp)</label>
+								<input name="price" type="number" x-model="editHarga" required class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+							</div>
+						</div>
+						<div>
+							<label class="text-xs font-bold text-gray-500 uppercase ml-1">Update Gambar (Kosongkan jika tidak diubah)</label>
+							<input type="file" name="image" accept="image/*" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none transition-all mt-1"/>
+						</div>
+						<div class="flex justify-end gap-3 pt-2">
+							<button type="button" @click="editModal = false" class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-all">Batal</button>
+							<button type="submit" class="px-8 py-3 bg-brand-gold text-white rounded-xl font-bold hover:bg-yellow-600 shadow-lg shadow-yellow-600/20 transition-all active:scale-95">Update Produk</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	}
+}

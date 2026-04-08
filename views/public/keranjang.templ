@@ -1,0 +1,345 @@
+package public
+
+import (
+	"e-commerce/internal/repository"
+	"fmt"
+	"strconv"
+)
+
+func formatRupiah(amount int) string {
+	return fmt.Sprintf("Rp %s", strconv.Itoa(amount))
+}
+
+templ Keranjang(products []repository.Product) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Keranjang Belanja - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+			<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-cream': '#FFFEE4',
+                                'h-gold': '#AD861C',
+                                'h-yellow-soft': '#FFF9A6',
+                                'h-yellow-cart': '#FFD18C',
+                                'h-blue-btn': '#1D4ED8',
+                            },
+                            fontFamily: {
+                                sans: ['Poppins', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+
+                async function updateQty(btn, change) {
+                    const productId = btn.getAttribute('data-product-id');
+                    const row = btn.closest('tr');
+                    const qtySpan = row.querySelector('.qty-val');
+                    let currentQty = parseInt(qtySpan.innerText);
+                    let newQty = currentQty + change;
+
+                    if (newQty >= 1) {
+                        const response = await fetch(`/keranjang/update?product_id=${productId}&qty=${newQty}`, {
+                            method: 'GET' 
+                        });
+
+                        if (response.ok) {
+                            qtySpan.innerText = newQty;
+                            const price = parseInt(row.querySelector('.item-checkbox').getAttribute('data-price'));
+                            const subtotalCell = row.querySelector('.subtotal-val');
+                            subtotalCell.innerText = "Rp " + new Intl.NumberFormat('id-ID').format(newQty * price);
+                            calculateTotal();
+                        }
+                    }
+                }
+
+                function calculateTotal() {
+                    let total = 0;
+                    const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+                    const deleteBtn = document.getElementById('btn-hapus-selected');
+                    const checkoutCount = document.getElementById('checkout-count');
+                    
+                    checkboxes.forEach(cb => {
+                        const row = cb.closest('tr');
+                        const qty = parseInt(row.querySelector('.qty-val').innerText);
+                        const price = parseInt(cb.getAttribute('data-price'));
+                        total += (price * qty);
+                    });
+
+                    if (deleteBtn) {
+                        deleteBtn.classList.toggle('hidden', checkboxes.length === 0);
+                    }
+                    
+                    if (checkoutCount) {
+                        checkoutCount.innerText = checkboxes.length + " Produk";
+                    }
+
+                    document.getElementById('total-display').innerText = "Rp " + new Intl.NumberFormat('id-ID').format(total);
+                }
+
+                function proceedToCheckout() {
+                    const checkedItems = document.querySelectorAll('.item-checkbox:checked');
+                    
+                    if (checkedItems.length === 0) {
+                        Swal.fire({
+                            title: '<span class="text-gray-800">Pilih Produk</span>',
+                            html: '<p class="text-gray-500 text-sm">Centang produk yang ingin kamu beli terlebih dahulu ya!</p>',
+                            icon: 'info',
+                            iconColor: '#1D4ED8',
+                            confirmButtonColor: '#1D4ED8',
+                            confirmButtonText: 'Oke, Mengerti',
+                            customClass: {
+                                popup: 'rounded-[2rem] p-6',
+                                title: 'text-2xl font-bold pt-4',
+                                confirmButton: 'rounded-xl px-8 py-3 font-bold text-sm'
+                            }
+                        });
+                        return;
+                    }
+
+                    let hasOutOfStock = false;
+                    let outOfStockName = "";
+                    checkedItems.forEach(cb => {
+                        if (cb.getAttribute('data-stock') === "0") {
+                            hasOutOfStock = true;
+                            outOfStockName = cb.getAttribute('data-name');
+                        }
+                    });
+
+                    if (hasOutOfStock) {
+                        Swal.fire({
+                            title: '<span class="text-gray-800">Stok Habis</span>',
+                            html: `<p class="text-gray-500 text-sm">Waduh, produk <b>${outOfStockName}</b> sedang kosong. Hapus centang untuk melanjutkan.</p>`,
+                            icon: 'error',
+                            iconColor: '#ef4444',
+                            confirmButtonColor: '#1D4ED8',
+                            confirmButtonText: 'Siap',
+                            customClass: {
+                                popup: 'rounded-[2rem] p-6',
+                                title: 'text-2xl font-bold pt-4',
+                                confirmButton: 'rounded-xl px-8 py-3 font-bold text-sm'
+                            }
+                        });
+                        return;
+                    }
+
+                    const ids = Array.from(checkedItems).map(cb => cb.getAttribute('data-product-id')).join(',');
+                    window.location.href = `/checkout?ids=${ids}`;
+                }
+
+                async function deleteSelected() {
+                    const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+                    if (checkboxes.length === 0) return;
+
+                    const result = await Swal.fire({
+                        title: '<span class="text-gray-800">Hapus Produk?</span>',
+                        html: `<p class="text-gray-500 text-sm">Apakah kamu yakin ingin menghapus <b>${checkboxes.length} produk</b> dari keranjang?</p>`,
+                        icon: 'warning',
+                        iconColor: '#AD861C',
+                        showCancelButton: true,
+                        confirmButtonColor: '#1D4ED8',
+                        cancelButtonColor: '#F3F4F6',
+                        confirmButtonText: 'Ya, Hapus',
+                        cancelButtonText: '<span class="text-gray-600">Batal</span>',
+                        reverseButtons: true,
+                        customClass: {
+                            popup: 'rounded-[2rem] p-6',
+                            title: 'text-2xl font-bold pt-4',
+                            confirmButton: 'rounded-xl px-8 py-3 font-bold text-sm',
+                            cancelButton: 'rounded-xl px-8 py-3 font-bold text-sm'
+                        }
+                    });
+
+                    if (result.isConfirmed) {
+                        const ids = Array.from(checkboxes).map(cb => cb.getAttribute('data-product-id')).join(',');
+                        
+                        try {
+                            const response = await fetch(`/keranjang/hapus-masal?ids=${ids}`);
+                            if (response.ok) {
+                                await Swal.fire({
+                                    html: `
+                                        <div class="flex flex-col items-center p-4">
+                                            <div class="bg-black/80 backdrop-blur-sm rounded-2xl p-6 flex flex-col items-center shadow-2xl min-w-[180px]">
+                                                <i class="fas fa-check-circle text-5xl text-h-yellow-cart mb-3 animate-bounce"></i>
+                                                <p class="text-white font-medium text-lg">Berhasil dihapus</p>
+                                            </div>
+                                        </div>
+                                    `,
+                                    showConfirmButton: false,
+                                    timer: 1200,
+                                    background: 'transparent',
+                                    backdrop: 'rgba(0,0,0,0.2)'
+                                });
+                                location.reload();
+                            } else {
+                                throw new Error("Gagal");
+                            }
+                        } catch (err) {
+                            Swal.fire('Oops!', 'Terjadi kesalahan saat menghapus.', 'error');
+                        }
+                    }
+                }
+
+                window.onload = calculateTotal;
+            </script>
+			<style>
+                .item-checkbox {
+                    appearance: none;
+                    -webkit-appearance: none;
+                    height: 24px;
+                    width: 24px;
+                    background-color: #fff;
+                    border: 2px solid #D1D5DB;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                }
+                .item-checkbox:checked {
+                    background-color: #1D4ED8;
+                    border-color: #1D4ED8;
+                    box-shadow: 0 0 10px rgba(29, 78, 216, 0.3);
+                }
+                .item-checkbox:checked::after {
+                    content: "\f00c";
+                    font-family: "Font Awesome 6 Free";
+                    font-weight: 900;
+                    color: white;
+                    font-size: 12px;
+                }
+                .swal2-popup {
+                    padding: 0 !important;
+                    width: auto !important;
+                }
+            </style>
+		</head>
+		<body class="bg-white font-sans text-gray-800">
+			<header class="bg-h-cream py-3 px-6 shadow-sm">
+				<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+					<div class="flex items-center gap-2 min-w-fit">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-poppins font-bold text-xl tracking-tight">
+							HOSTEL MART
+						</span>
+					</div>
+				</div>
+			</header>
+			<main class="max-w-7xl mx-auto px-6 py-8">
+				<div class="flex justify-between items-center mb-8">
+					<a href="/" class="inline-flex items-center gap-2 bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 px-8 py-3 rounded-xl font-bold transition text-sm text-black shadow-[0_4px_0_0_rgba(202,138,4,0.2)] active:translate-y-[2px] active:shadow-none">
+						<i class="fas fa-arrow-left"></i> Kembali
+					</a>
+					<button id="btn-hapus-selected" onclick="deleteSelected()" class="hidden inline-flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-6 py-3 rounded-xl font-bold transition text-sm shadow-sm">
+						<i class="fas fa-trash-alt"></i> Hapus Terpilih
+					</button>
+				</div>
+				<div class="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm mb-8">
+					if len(products) == 0 {
+						<div class="py-24 flex flex-col items-center text-center">
+							<div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+								<i class="fas fa-shopping-basket text-4xl text-gray-300"></i>
+							</div>
+							<h2 class="text-xl font-bold text-gray-700">Keranjang masih kosong</h2>
+							<p class="text-gray-500 mb-6">Yuk, cari barang kebutuhanmu sekarang!</p>
+							<a href="/" class="bg-h-blue-btn text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition">Mulai Belanja</a>
+						</div>
+					} else {
+						<table class="w-full text-left">
+							<thead>
+								<tr class="bg-gray-50/50 border-b border-gray-100">
+									<th class="py-5 px-10 font-bold text-gray-600 text-sm uppercase tracking-wider w-1/2">Produk</th>
+									<th class="py-5 px-6 font-bold text-gray-600 text-sm uppercase tracking-wider text-center">Harga</th>
+									<th class="py-5 px-6 font-bold text-gray-600 text-sm uppercase tracking-wider text-center">Jumlah</th>
+									<th class="py-5 px-10 font-bold text-gray-600 text-sm uppercase tracking-wider text-right">Subtotal</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-100">
+								for _, p := range products {
+									<tr class="hover:bg-gray-50/30 transition group">
+										<td class="py-8 px-10">
+											<div class="flex items-center gap-6">
+												<input
+													type="checkbox"
+													class="item-checkbox"
+													data-price={ strconv.Itoa(p.Price) }
+													data-product-id={ strconv.Itoa(p.ID) }
+													data-stock={ strconv.Itoa(p.Stock) }
+													data-name={ p.Name }
+													onchange="calculateTotal()"
+												/>
+												<div class="w-24 h-24 border border-gray-100 rounded-2xl flex items-center justify-center p-2 bg-white flex-shrink-0 group-hover:scale-105 transition duration-300 shadow-sm">
+													<img src={ "/image/" + p.Image } alt={ p.Name } class="max-h-full max-w-full object-contain"/>
+												</div>
+												<div>
+													<h3 class="font-bold text-xl text-gray-900 mb-1 leading-tight">{ p.Name }</h3>
+													if p.Stock > 0 {
+														<p class="text-sm text-h-gold font-semibold">Tersedia (Stok: { strconv.Itoa(p.Stock) })</p>
+													} else {
+														<p class="text-sm text-red-500 font-semibold">Stok Tidak Tersedia</p>
+													}
+												</div>
+											</div>
+										</td>
+										<td class="py-8 px-6 text-center text-gray-700 font-medium text-lg">Rp { strconv.Itoa(p.Price) }</td>
+										<td class="py-8 px-6">
+											<div class="flex items-center justify-center">
+												<div class="flex items-center border-2 border-gray-100 rounded-xl p-1 bg-white shadow-sm">
+													<button
+														type="button"
+														data-product-id={ strconv.Itoa(p.ID) }
+														onclick="updateQty(this, -1)"
+														class="w-9 h-9 flex items-center justify-center hover:bg-gray-50 rounded-lg text-gray-500 transition active:scale-90"
+													><i class="fas fa-minus text-xs"></i></button>
+													<span class="qty-val font-extrabold text-lg px-5 text-gray-900">{ strconv.Itoa(p.CartQty) }</span>
+													<button
+														type="button"
+														data-product-id={ strconv.Itoa(p.ID) }
+														onclick="updateQty(this, 1)"
+														class="w-9 h-9 flex items-center justify-center hover:bg-gray-50 rounded-lg text-gray-500 transition active:scale-90"
+													><i class="fas fa-plus text-xs"></i></button>
+												</div>
+											</div>
+										</td>
+										<td class="py-8 px-10 text-right font-bold text-gray-900 text-xl subtotal-val">
+											{ formatRupiah(p.Price * p.CartQty) }
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					}
+				</div>
+				if len(products) > 0 {
+					<div class="flex justify-end mb-12">
+						<div class="bg-gray-50 border border-gray-100 p-6 rounded-2xl shadow-sm min-w-[320px]">
+							<div class="space-y-2 mb-6">
+								<div class="flex items-center justify-between text-gray-500 text-sm">
+									<span>Ringkasan belanja</span>
+									<span id="checkout-count">0 Produk</span>
+								</div>
+								<div class="flex items-center justify-between pt-2 border-t border-gray-200">
+									<span class="text-gray-900 font-bold">Total Harga:</span>
+									<span id="total-display" class="text-xl font-black text-gray-900">Rp 0</span>
+								</div>
+							</div>
+							<button onclick="proceedToCheckout()" class="w-full bg-h-blue-btn hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition active:scale-[0.98] text-base">
+								<i class="fas fa-shopping-bag text-sm"></i>
+								Checkout Sekarang
+							</button>
+						</div>
+					</div>
+				}
+			</main>
+		</body>
+	</html>
+}

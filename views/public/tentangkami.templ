@@ -1,0 +1,44 @@
+package public
+
+import "e-commerce/views/layouts"
+
+templ TentangKamiPage(from string) {
+    @layouts.StaticLayout("Tentang Kami", from) {
+        <h1 class="text-3xl md:text-4xl font-bold text-black mb-12">
+            HostelMart adalah platform belanja online 
+            <br class="hidden md:block"/> 
+            terdepan di Asia Tenggara
+        </h1>
+
+        <div class="max-w-3xl mx-auto space-y-6 text-gray-700 text-sm md:text-base leading-relaxed mb-16">
+            <p>
+                Diluncurkan tahun 2025, HostelMart merupakan sebuah platform yang disesuaikan untuk tiap wilayah 
+                dan menyediakan pengalaman berbelanja online yang mudah, aman, dan cepat bagi pelanggan 
+                melalui dukungan pembayaran dan logistik yang kuat.
+            </p>
+            <p>
+                Kami percaya bahwa kegiatan belanja online harus terjangkau, mudah, dan menyenangkan. Ini adalah 
+                visi yang ingin HostelMart berikan melalui platform kami, setiap harinya.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 mt-10">
+            <div class="bg-[#FFFEE4] p-8 rounded-xl border border-gray-200 shadow-sm transition-transform hover:scale-[1.02] text-left">
+                <h2 class="text-xl font-bold mb-4">Tujuan kami</h2>
+                <p class="text-gray-700 text-sm leading-relaxed">
+                    Kami percaya pada kekuatan transformatif dari teknologi dan ingin mengubah dunia menjadi lebih baik 
+                    dengan menyediakan platform untuk menghubungkan pembeli dan penjual dalam satu komunitas.
+                </p>
+            </div>
+
+            <div class="bg-[#FFFEE4] p-8 rounded-xl border border-gray-200 shadow-sm transition-transform hover:scale-[1.02] text-left">
+                <h2 class="text-xl font-bold mb-4">Posisi Kami</h2>
+                <p class="text-gray-700 text-sm leading-relaxed">
+                    Untuk pengguna Internet di seluruh wilayah, HostelMart menawarkan pengalaman belanja online 
+                    komprehensif, dari berbagai pilihan produk sampai ke sebuah komunitas sosial untuk bereksplorasi, 
+                    dan layanan untuk selalu memenuhi kebutuhan konsumen tanpa hambatan.
+                </p>
+            </div>
+        </div>
+    }
+}

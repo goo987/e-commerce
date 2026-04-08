@@ -1,0 +1,65 @@
+package public
+
+import "e-commerce/views/layouts"
+
+templ SyaratKetentuanPage(from string) {
+	@layouts.StaticLayout("Syarat, Ketentuan & Kebijakan Privasi", from) {
+		<h1 class="text-2xl md:text-3xl font-bold text-black mb-10">
+			Syarat, ketentuan&kebijakan privasi
+		</h1>
+		
+		<div class="max-w-4xl mx-auto text-left space-y-8 text-gray-800 text-sm md:text-base leading-relaxed">
+			<div class="space-y-2">
+				<p class="font-medium">Syarat, Ketentuan & Kebijakan Privasi</p>
+				<p class="font-medium">HostelMart</p>
+				<p>
+					Dengan menggunakan layanan HostelMart, pengguna dianggap telah membaca, 
+					memahami, dan menyetujui syarat, ketentuan, serta kebijakan privasi berikut.
+				</p>
+			</div>
+
+			<section>
+				<h2 class="font-bold">1. Penggunaan Layanan</h2>
+				<p>HostelMart adalah platform e-commerce yang menyediakan layanan jual beli produk.</p>
+				<p>Pengguna wajib menggunakan layanan ini secara wajar dan tidak melanggar hukum yang berlaku.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold">2. Akun Pengguna</h2>
+				<p>Pengguna bertanggung jawab atas keamanan akun dan data login masing-masing. Segala aktivitas yang terjadi melalui akun pengguna menjadi tanggung jawab pemilik akun.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold">3. Data yang Dikumpulkan</h2>
+				<p>Kami mengumpulkan data pengguna seperti:</p>
+				<ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-gray-700">
+					<li>Nama</li>
+					<li>Email</li>
+					<li>Nomor ponsel</li>
+					<li>Alamat pengiriman</li>
+				</ul>
+				<p class="mt-2 italic">Data ini digunakan untuk keperluan transaksi, pengiriman, dan peningkatan layanan.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold">4. Keamanan & Privasi Data</h2>
+				<p>HostelMart berkomitmen menjaga kerahasiaan data pengguna dan tidak membagikan data pribadi kepada pihak ketiga tanpa izin pengguna, kecuali diwajibkan oleh hukum.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold">5. Transaksi & Pesanan</h2>
+				<p>Semua transaksi yang dilakukan melalui HostelMart mengikuti alur pemesanan yang tersedia. Status pesanan akan ditampilkan sesuai proses (diproses, dikirim, atau selesai).</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold">6. Perubahan Layanan</h2>
+				<p>HostelMart berhak melakukan perubahan pada layanan, fitur, maupun kebijakan untuk meningkatkan kualitas platform tanpa pemberitahuan sebelumnya.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold">7. Persetujuan</h2>
+				<p>Dengan mendaftar dan menggunakan HostelMart, pengguna menyetujui seluruh syarat, ketentuan, dan kebijakan privasi yang berlaku.</p>
+			</section>
+		</div>
+	}
+}

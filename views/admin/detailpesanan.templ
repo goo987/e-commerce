@@ -1,0 +1,256 @@
+package admin
+
+import (
+	"e-commerce/internal/repository"
+	"fmt"
+	"time"
+)
+
+func calculateEstimation(orderDateStr string) string {
+	t, err := time.Parse("02 Jan 2006", orderDateStr)
+	if err != nil {
+		t = time.Now()
+	}
+	est := t.AddDate(0, 0, 2)
+	if time.Now().After(est) {
+		est = time.Now().AddDate(0, 0, 2)
+	}
+	return est.Format("02 Jan 2006")
+}
+
+templ DetailPesanan(order repository.Order) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Admin - Detail Pesanan #{ order.OrderID }</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+			<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+			<script>
+				tailwind.config = {
+					theme: {
+						extend: {
+							colors: {
+								'h-gold': '#AD861C',
+							},
+							fontFamily: {
+								'poppins': ['Poppins', 'sans-serif'],
+								'inter': ['Inter', 'sans-serif'],
+							}
+						}
+					}
+				}
+			</script>
+		</head>
+		<body class="bg-gray-50 font-inter min-h-screen pb-20" x-data="{ showImageModal: false }">
+			<div
+				x-show="showImageModal"
+				x-transition:enter="transition ease-out duration-300"
+				x-transition:enter-start="opacity-0"
+				x-transition:enter-end="opacity-100"
+				x-transition:leave="transition ease-in duration-200"
+				x-transition:leave-start="opacity-100"
+				x-transition:leave-end="opacity-0"
+				class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+				style="display: none;"
+				@keydown.escape.window="showImageModal = false"
+			>
+				<div
+					class="relative max-w-3xl w-full transform transition-all"
+					x-show="showImageModal"
+					x-transition:enter="transition ease-out duration-300"
+					x-transition:enter-start="opacity-0 scale-95"
+					x-transition:enter-end="opacity-100 scale-100"
+					@click.away="showImageModal = false"
+				>
+					<button
+						class="absolute -top-12 right-0 md:-right-12 text-white hover:text-gray-300 transition-colors flex items-center gap-2 group"
+						@click="showImageModal = false"
+					>
+						<span class="text-sm font-semibold tracking-widest uppercase hidden md:inline">Tutup</span>
+						<div class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 group-hover:bg-white/20">
+							<i class="fas fa-times text-xl"></i>
+						</div>
+					</button>
+					<div class="bg-white rounded-2xl overflow-hidden shadow-2xl border border-white/20">
+						<div class="p-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+							<span class="text-xs font-bold text-gray-500 uppercase px-2">Bukti Pembayaran #{ order.OrderID }</span>
+							if order.PaymentProof != "" {
+								<a href={ "/bukti_transfer/" + order.PaymentProof } download class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+									<i class="fas fa-download"></i> Unduh
+								</a>
+							}
+						</div>
+						<div class="p-2 bg-gray-200">
+							if order.PaymentProof != "" {
+								<img
+									src={ "/bukti_transfer/" + order.PaymentProof }
+									class="max-h-[75vh] w-auto mx-auto rounded shadow-inner object-contain"
+									alt="Bukti Transfer"
+								/>
+							} else {
+								<div class="bg-white py-20 rounded-lg text-center px-6">
+									<p class="text-gray-600 font-bold">Bukti pembayaran belum diunggah.</p>
+									<p class="text-gray-400 text-sm mt-1">
+										Pembeli mungkin belum melakukan konfirmasi atau membatalkan pesanan.
+									</p>
+								</div>
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+			<main class="max-w-7xl mx-auto px-6 py-8 w-full">
+				<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<div>
+						<a href="/admin/laporan" class="inline-flex items-center gap-2 bg-[#FFF9A6] border border-gray-200 rounded-lg px-5 py-2 text-black hover:bg-yellow-200 transition shadow-md font-semibold text-sm">
+							<i class="fas fa-arrow-left text-[10px]"></i> kembali ke halaman laporan
+						</a>
+						<h1 class="text-2xl font-bold text-black font-inter uppercase tracking-tight mt-8">Detail Pesanan Admin</h1>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+					<div class="lg:col-span-8 space-y-6">
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
+							<div class="flex items-center justify-between p-4 border-b border-gray-300 bg-white">
+								<div class="flex items-center gap-4">
+									<span class="text-xl font-bold text-black">#{ order.OrderID }</span>
+									<div class="flex flex-col text-[11px] text-gray-500 font-medium">
+										<span>Tanggal : { order.Date }</span>
+										<span>
+											if order.Status == "Selesai" {
+												Selesai pada : { time.Now().Format("02 Jan 2006") }
+											} else {
+												Estimasi : { calculateEstimation(order.Date) }
+											}
+										</span>
+									</div>
+								</div>
+								<div>
+									switch order.Status {
+										case "Diproses":
+											<span class="bg-yellow-100 text-yellow-700 border border-yellow-400 px-4 py-1 rounded-lg text-xs font-bold uppercase">Diproses</span>
+										case "Dikirim":
+											<span class="bg-blue-100 text-blue-700 border border-blue-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">Dikirim</span>
+										case "Selesai":
+											<span class="bg-green-100 text-green-700 border border-green-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">Selesai</span>
+										case "Dibatalkan":
+											<span class="bg-red-100 text-red-700 border border-red-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">Dibatalkan</span>
+										case "Menunggu Pembayaran":
+											<span class="bg-orange-50 text-orange-600 border border-orange-200 px-4 py-1 rounded-lg text-xs font-bold uppercase">Menunggu Pembayaran</span>
+										default:
+											<span class="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">{ order.Status }</span>
+									}
+								</div>
+							</div>
+							<div class="divide-y divide-gray-200">
+								for _, item := range order.Items {
+									<div class="flex items-center justify-between p-5 bg-white">
+										<div class="flex items-center gap-5">
+											<div class="w-20 h-20 border border-gray-100 rounded-lg overflow-hidden bg-gray-50">
+												if item.Image != "" {
+													<img src={ "/image/" + item.Image } class="w-full h-full object-cover" alt={ item.ProductName }/>
+												} else {
+													<div class="w-full h-full flex items-center justify-center">
+														<i class="fa-solid fa-image text-gray-300 text-2xl"></i>
+													</div>
+												}
+											</div>
+											<div>
+												<h3 class="font-bold text-black text-sm mb-1">{ item.ProductName }</h3>
+												<p class="text-gray-400 font-medium text-xs">
+													Rp. { fmt.Sprintf("%d", item.Price) } x { fmt.Sprintf("%d", item.Quantity) }
+												</p>
+											</div>
+										</div>
+										<span class="font-bold text-black text-sm">Rp. { fmt.Sprintf("%d", item.Price * item.Quantity) }</span>
+									</div>
+								}
+							</div>
+							<div class="flex justify-end items-center p-4 bg-gray-50 border-t border-gray-300 gap-4">
+								<span class="text-sm font-bold text-black uppercase">Subtotal Produk :</span>
+								<span class="text-sm font-bold text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+							</div>
+						</div>
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-300">
+							<div class="p-5">
+								<h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Data Pembeli & Alamat</h4>
+								<div class="space-y-1">
+									<p class="font-bold text-black text-sm">{ order.BuyerName }</p>
+									<p class="text-xs text-gray-600 leading-relaxed">{ order.Address }</p>
+									<p class="text-xs text-gray-600 font-medium italic">{ order.Email }</p>
+									<p class="text-xs text-gray-600 font-medium italic">{ order.Phone }</p>
+								</div>
+							</div>
+							<div class="p-5">
+								<h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Metode Pembayaran</h4>
+								<div class="flex items-center gap-3">
+									<div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-black">
+										if order.PaymentMethod == "cod" || order.PaymentMethod == "COD" {
+											<i class="fas fa-hand-holding-dollar text-lg"></i>
+										} else {
+											<i class="fa-solid fa-building-columns text-lg"></i>
+										}
+									</div>
+									<span class="font-bold text-black text-sm uppercase">{ order.PaymentMethod }</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="lg:col-span-4 space-y-6">
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
+							<div class="p-4 border-b border-gray-300">
+								<h4 class="text-sm font-bold text-black uppercase tracking-tight">Ringkasan Transaksi</h4>
+							</div>
+							<div class="p-5 space-y-4">
+								<div class="flex justify-between text-sm font-medium text-gray-600">
+									<span>Total Harga Produk</span>
+									<span class="text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+								</div>
+								<div class="flex justify-between text-sm font-medium text-gray-600">
+									<span>Ongkos Kirim</span>
+									<span class="text-black">Rp. { fmt.Sprintf("%d", order.ShippingCost) }</span>
+								</div>
+								<div class="pt-4 border-t border-dashed border-gray-300 flex justify-between items-center">
+									<span class="text-sm font-bold text-black uppercase">Total Bayar</span>
+									<span class="text-lg font-bold text-h-gold">Rp. { fmt.Sprintf("%d", order.Total) }</span>
+								</div>
+							</div>
+						</div>
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
+							<div class="p-4 border-b border-gray-300">
+								<h4 class="text-sm font-bold text-black uppercase tracking-tight">Status Pengiriman</h4>
+							</div>
+							<div class="p-5 space-y-4">
+								<div class="flex justify-between text-sm">
+									<span class="text-gray-500 font-medium">Nomor Order</span>
+									<span class="font-bold text-black">ORD-{ order.OrderID }</span>
+								</div>
+								<div class="flex justify-between text-sm">
+									<span class="text-gray-500 font-medium">Status Saat Ini</span>
+									<span class="italic font-bold text-h-gold uppercase">{ order.Status }</span>
+								</div>
+							</div>
+						</div>
+						if order.PaymentMethod != "COD" && order.PaymentMethod != "cod" {
+							<div class="bg-transparent border-none shadow-none">
+								<div class="p-0">
+									<button
+										@click="showImageModal = true"
+										class="w-full flex items-center justify-between px-5 py-3 rounded-full border border-gray-300 bg-gray-100 text-[#1F2A44] font-semibold text-sm hover:bg-gray-200 transition"
+									>
+										<span>Lihat bukti pembayaran</span>
+										<i class="fas fa-image text-base text-[#1F2A44]"></i>
+									</button>
+								</div>
+							</div>
+						}
+					</div>
+				</div>
+			</main>
+		</body>
+	</html>
+}

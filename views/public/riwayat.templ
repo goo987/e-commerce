@@ -1,0 +1,221 @@
+package public
+
+import (
+	"e-commerce/internal/repository"
+	"fmt"
+	"strconv"
+)
+
+func formatHarga(n int) string {
+	return fmt.Sprintf("%d", n)
+}
+
+templ Riwayat(orders []repository.Order, currentStatus string) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Riwayat Pesanan - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-cream': '#FFFEE4',
+                                'h-gold': '#AD861C',
+                                'h-yellow-soft': '#FCF4A3',
+                                'h-footer-bottom': '#FFD18C',
+                            },
+                            fontFamily: {
+                                'poppins': ['Poppins', 'sans-serif'],
+                                'inter': ['Inter', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+            </script>
+			<style>
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            </style>
+		</head>
+		<body class="bg-white font-inter">
+			<header class="bg-h-cream py-3 px-6 shadow-sm">
+				<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+					<div class="flex items-center gap-2 min-w-fit">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-poppins font-bold text-xl tracking-tight">
+							HOSTEL MART
+						</span>
+					</div>
+				</div>
+			</header>
+			<main class="max-w-7xl mx-auto px-6 py-8 min-h-screen">
+				<div class="mb-10">
+					<a href="/akun" class="inline-flex items-center gap-2 bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 px-9 py-2.5 rounded-xl font-bold transition text-sm text-black shadow-[0_4px_0_0_rgba(202,138,4,0.2)] active:translate-y-[2px] active:shadow-none">
+						<i class="fas fa-arrow-left"></i> Kembali
+					</a>
+				</div>
+				<div class="mb-5">
+					<h1 class="text-2xl font-bold text-black font-inter">Riwayat pesanan</h1>
+				</div>
+				<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+					<div class="flex border-2 border-gray-300 rounded-lg overflow-hidden w-max shadow-md">
+						for i, s := range []string{"Semua", "Diproses", "Dikirim", "Selesai", "Dibatalkan"} {
+							<a
+								if s == "Semua" {
+									href="/riwayat"
+								} else {
+									href={ templ.SafeURL("/riwayat?status=" + s) }
+								}
+								class={ "px-6 py-2 text-xs font-bold transition-all text-center", 
+                                    templ.KV("bg-[#15803d] text-white", currentStatus == s || (currentStatus == "" && s == "Semua")),
+                                    templ.KV("bg-white text-gray-800 hover:bg-gray-50", currentStatus != s && !(currentStatus == "" && s == "Semua")),
+                                    templ.KV("border-r-2 border-gray-300", i != 4) }
+							>
+								{ s }
+							</a>
+						}
+					</div>
+				</div>
+				<div class="space-y-4">
+					if len(orders) == 0 {
+						<div class="flex flex-col items-center justify-center py-20 bg-white rounded-xl border-2 border-gray-200 text-center shadow-sm">
+							<i class="fa-solid fa-box-open text-5xl text-gray-300 mb-4"></i>
+							<p class="text-gray-500 font-bold text-lg">Belum ada riwayat pesanan.</p>
+						</div>
+					} else {
+						for _, o := range orders {
+							<div class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm flex flex-col gap-4">
+								<div class="flex flex-wrap items-center justify-between gap-4">
+									<div class="flex items-center gap-3 text-sm">
+										<span class="font-bold text-black">#{ o.OrderID }</span>
+										<span class="text-gray-500 font-medium">{ o.Date }</span>
+									</div>
+									<div class="flex items-center gap-3">
+										if (o.Status == "Menunggu Pembayaran" || o.Status == "Diproses") && o.PaymentMethod == "transfer" && o.PaymentProof == "" {
+											<a
+												href={ templ.SafeURL("/pembayaran/" + o.OrderID) }
+												class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-1.5 rounded-lg text-[11px] flex items-center justify-center gap-2 w-36 shadow-[0_3px_0_0_rgba(194,65,12,1)] active:translate-y-[2px] active:shadow-none transition-all"
+											>
+												<i class="fas fa-wallet"></i> Bayar Sekarang
+											</a>
+										} else {
+											<span
+												class={ "px-2 py-1.5 rounded-lg font-bold border-2 w-36 text-center flex items-center justify-center",
+                                                   templ.KV("bg-amber-100 text-amber-700 border-amber-200 text-[11px]", o.Status == "Diproses" || o.Status == "Menunggu Pembayaran"),
+                                                    templ.KV("bg-blue-100 text-blue-700 border-blue-300 text-[11px]", o.Status == "Dikirim"),
+                                                    templ.KV("bg-green-100 text-green-600 border-green-300 text-[11px]", o.Status == "Selesai"),
+                                                    templ.KV("bg-red-100 text-red-700 border-red-200 text-[11px]", o.Status == "Dibatalkan"),
+                                                    templ.KV("bg-red-100 text-red-700 border-red-200 text-[9px]", o.Status == "Pengajuan Pembatalan") }
+											>
+												{ o.Status }
+											</span>
+										}
+										<a
+											href={ templ.SafeURL("/riwayat/detail/" + o.OrderID) }
+											class="bg-[#FFEFC3] border border-gray-300 text-black font-bold px-4 py-1.5 rounded-lg text-[11px] flex items-center gap-1 shadow-sm hover:brightness-95 transition"
+										>
+											Detail <span class="text-gray-500 ml-1 font-bold">></span>
+										</a>
+									</div>
+								</div>
+								<div class="flex items-center gap-5">
+									<div class="w-16 h-16 flex-shrink-0">
+										if len(o.Items) > 0 && o.Items[0].Image != "" {
+											<img src={ "/image/" + o.Items[0].Image } class="w-full h-full object-contain border border-gray-200 p-1.5 rounded-lg" alt="Produk"/>
+										} else {
+											<div class="w-full h-full bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center">
+												<i class="fa-solid fa-image text-gray-300"></i>
+											</div>
+										}
+									</div>
+									<div class="flex flex-col gap-1">
+										if len(o.Items) > 0 {
+											<span class="font-bold text-black text-sm">{ o.Items[0].ProductName }</span>
+											if len(o.Items) > 1 {
+												<span class="text-[10px] text-gray-500">+{ strconv.Itoa(len(o.Items)-1) } produk lainnya</span>
+											}
+										}
+										<div class="flex items-center gap-3">
+											<span class="text-sm text-gray-600 font-medium">Total: Rp { formatHarga(o.Total) }</span>
+											<div class="h-4 w-0.5 bg-gray-300"></div>
+											<span class="text-[11px] text-gray-500 uppercase font-bold">{ o.PaymentMethod }</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						}
+					}
+				</div>
+			</main>
+			<footer class="bg-h-cream pt-10 border-t border-gray-100 font-inter">
+				<div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
+					<div class="md:col-span-4">
+						<div class="flex items-center gap-3 mb-5">
+							<img src="/image/logo.png" alt="Logo" class="h-12 w-auto"/>
+							<span class="text-h-gold font-poppins font-bold text-3xl tracking-tight">
+								HOSTEL MART
+							</span>
+						</div>
+						<p class="text-base text-gray-800 leading-relaxed font-medium mb-8 max-w-sm">
+							Hostel Mart adalah e-commerce yang mendukung produk lokal dengan sistem 
+							belanja yang mudah, simple, dan terpercaya
+						</p>
+						<p class="text-sm font-semibold text-black">
+							© HostelMart 2026. All Rights Reserved.
+						</p>
+					</div>
+					<div class="md:col-span-2">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Layanan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li><a href="/tentang-kami" class="hover:text-h-gold transition">Tentang Kami</a></li>
+							<li><a href="/" class="hover:text-h-gold transition">Produk</a></li>
+							<li><a href="/keranjang" class="hover:text-h-gold transition">Keranjang</a></li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Bantuan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium leading-relaxed">
+							<li><a href="/cara-belanja" class="hover:text-h-gold transition">Cara Belanja</a></li>
+							<li><a href="/metode-pembayaran" class="hover:text-h-gold transition">Metode Pembayaran</a></li>
+							<li><a href="/pengiriman" class="hover:text-h-gold transition">Pengiriman</a></li>
+							<li>
+								<a href="/syarat-ketentuan" class="hover:text-h-gold transition text-base font-medium leading-relaxed">
+									Syarat & Ketentuan dan Kebijakan Privasi
+									<span class="text-h-gold font-bold ml-1 text-lg">>></span>
+								</a>
+							</li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Hubungi Kami</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li class="flex items-center gap-3">
+								<i class="fas fa-envelope text-black"></i>
+								<span>HostelMart@gmail.com</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-phone-alt text-black"></i>
+								<span>0821-3465-7892</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-map-marker-alt text-black"></i>
+								<span>Indonesia</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="bg-h-footer-bottom py-6 border-t border-black/10">
+					<p class="text-base font-semibold text-black text-center">
+						© HostelMart 2026. All Rights Reserved.
+					</p>
+				</div>
+			</footer>
+		</body>
+	</html>
+}

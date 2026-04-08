@@ -1,0 +1,206 @@
+package admin
+
+import (
+	"e-commerce/internal/repository"
+	"e-commerce/views/layouts"
+	"fmt"
+)
+
+templ Petugas(petugasList []repository.User) {
+	@layouts.BaseAdmin("Hostel Mart - Admin Petugas", "petugas") {
+		<div
+			x-data="{
+				openModal: false,
+				editModal: false,
+				activeDropdown: null,
+				search: '',
+				editId: '',
+				editUsername: '',
+				editEmail: '',
+				editPassword: ''
+			}"
+			@click="activeDropdown = null"
+			class="space-y-6"
+		>
+			<h2 class="text-2xl font-bold text-gray-800">Manajemen Petugas</h2>
+
+			<div class="bg-white rounded-2xl border border-gray-200 custom-shadow overflow-hidden">
+				<div class="p-6 flex justify-between items-center border-b border-gray-100 bg-white">
+					<div class="relative w-80">
+						<span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+							<i class="fas fa-search"></i>
+						</span>
+						<input
+							type="text"
+							x-model="search"
+							placeholder="Cari Petugas..."
+							class="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-1 focus:ring-brand-gold outline-none transition-all"
+						/>
+					</div>
+
+					<button
+						@click="openModal = true"
+						class="bg-white border border-gray-200 px-6 py-2.5 rounded-xl 
+							text-sm font-bold text-gray-700 
+							hover:bg-gray-50 shadow-sm transition-all active:scale-95
+							flex items-center justify-center gap-3">
+						<span>Tambah Petugas</span>
+						<span class="text-base font-bold translate-y-[1px]">+</span>
+					</button>
+				</div>
+
+				<div class="overflow-x-auto">
+					<table class="w-full text-left border-collapse">
+						<thead class="bg-gray-50 text-gray-800 text-sm font-bold border-b border-gray-100">
+							<tr>
+								<th class="px-8 py-5">User Info</th>
+								<th class="px-8 py-5">Tanggal Gabung</th>
+								<th class="px-8 py-5">Status</th>
+								<th class="px-8 py-5 text-center">Action</th>
+							</tr>
+						</thead>
+
+						<tbody class="divide-y divide-gray-100 text-sm">
+							for index, user := range petugasList {
+								<tr
+									x-show={ fmt.Sprintf("'%s'.toLowerCase().includes(search.toLowerCase()) || '%s'.toLowerCase().includes(search.toLowerCase())", user.Username, user.Email) }
+									class="hover:bg-yellow-50/30 transition-colors group"
+								>
+									<td class={ "px-8 py-5 transition-opacity", templ.KV("opacity-70 grayscale-[0.2]", user.IsActive != 1) }>
+										<div class="flex items-center gap-4">
+											<div
+												class={ fmt.Sprintf(
+													"w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm uppercase %s",
+													[]string{
+														"bg-red-100 text-red-600",
+														"bg-blue-100 text-blue-600",
+														"bg-green-100 text-green-600",
+														"bg-purple-100 text-purple-600",
+														"bg-pink-100 text-pink-600",
+														"bg-yellow-100 text-yellow-600",
+													}[index%6],
+												) }
+											>
+												{ string(user.Username[0]) }
+											</div>
+
+											<div>
+												<div class="font-bold text-gray-800 group-hover:text-brand-gold transition-colors">
+													{ user.Username }
+												</div>
+												<div class="text-xs text-gray-500">
+													{ user.Email }
+												</div>
+											</div>
+										</div>
+									</td>
+
+									<td class={ "px-8 py-5 text-gray-600 font-medium transition-opacity", templ.KV("opacity-70", user.IsActive != 1) }>
+										{ user.CreatedAt.Format("02-01-2006 15:04") }
+									</td>
+
+									<td class={ "px-8 py-5 transition-opacity", templ.KV("opacity-70", user.IsActive != 1) }>
+										if user.IsActive == 1 {
+											<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">
+												Active
+											</span>
+										} else {
+											<span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">
+												Inactive
+											</span>
+										}
+									</td>
+
+									<td class={ "px-8 py-5 text-center relative", templ.KV("opacity-90", user.IsActive != 1) }>
+
+										<button
+											@click.stop={ fmt.Sprintf("activeDropdown = (activeDropdown === %d ? null : %d)", index, index) }
+											class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-gray-200 hover:bg-white hover:shadow-sm transition-all"
+										>
+											<i class="fas fa-pen text-xs text-gray-500"></i>
+										</button>
+
+										<div
+											x-show={ fmt.Sprintf("activeDropdown === %d", index) }
+											x-transition:enter="transition ease-out duration-100"
+											x-transition:enter-start="transform opacity-0 scale-95"
+											x-transition:enter-end="transform opacity-100 scale-100"
+											class="absolute right-8 bottom-4 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-2 overflow-hidden text-left"
+											style="display: none;"
+										>
+											<button
+												@click={ fmt.Sprintf("editModal=true; editId='%d'; editUsername='%s'; editEmail='%s'; editPassword=''; activeDropdown=null;", user.ID, user.Username, user.Email) }
+												class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+											>
+												<i class="fas fa-edit text-blue-500 w-4"></i> Edit
+											</button>
+
+											<a
+												href={ templ.SafeURL(fmt.Sprintf("/admin/petugas/toggle?id=%d&status=%d", user.ID, user.IsActive)) }
+												class="w-full text-left px-4 py-2 text-sm hover:bg-yellow-50 text-yellow-700 flex items-center gap-2"
+											>
+												<i class="fas fa-sync w-4"></i>
+												if user.IsActive == 1 {
+													Nonaktifkan
+												} else {
+													Aktifkan
+												}
+											</a>
+
+											<div class="border-t border-gray-100 my-1"></div>
+
+											<a
+												href={ templ.SafeURL(fmt.Sprintf("/admin/petugas/delete?id=%d", user.ID)) }
+												onclick="return confirm('Hapus petugas ini?')"
+												class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+											>
+												<i class="fas fa-trash w-4"></i> Hapus
+											</a>
+										</div>
+
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<template x-teleport="body">
+				<div x-show="openModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-[9999] backdrop-blur-sm" style="display:none;" x-transition>
+					<div @click.away="openModal = false; $refs.addForm.reset()" class="bg-white w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
+						<h2 class="text-2xl font-bold text-gray-800">Tambah Petugas</h2>
+						<form x-ref="addForm" method="POST" action="/admin/petugas/create" class="space-y-4">
+							<input name="username" required placeholder="Username" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-1 focus:ring-brand-gold outline-none"/>
+							<input name="email" required type="email" placeholder="Email" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-1 focus:ring-brand-gold outline-none"/>
+							<input name="password" required type="password" placeholder="Password" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-1 focus:ring-brand-gold outline-none"/>
+							<div class="flex justify-end gap-3 pt-2">
+								<button type="button" @click="openModal=false; $refs.addForm.reset()" class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50">Batal</button>
+								<button type="submit" class="px-8 py-3 bg-brand-gold text-white rounded-xl font-bold hover:bg-yellow-600 shadow-md">Simpan</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</template>
+
+			<template x-teleport="body">
+				<div x-show="editModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-[9999] backdrop-blur-sm" style="display:none;" x-transition>
+					<div @click.away="editModal = false" class="bg-white w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
+						<h2 class="text-2xl font-bold text-gray-800">Edit Petugas</h2>
+						<form method="POST" action="/admin/petugas/update" class="space-y-4">
+							<input type="hidden" name="id" :value="editId"/>
+							<input name="username" x-model="editUsername" required class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-1 focus:ring-brand-gold outline-none"/>
+							<input name="email" type="email" x-model="editEmail" required class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-1 focus:ring-brand-gold outline-none"/>
+							<input name="password" type="password" x-model="editPassword" placeholder="Password baru (opsional)" class="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-1 focus:ring-brand-gold outline-none"/>
+							<div class="flex justify-end gap-3 pt-2">
+								<button type="button" @click="editModal=false" class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50">Batal</button>
+								<button type="submit" class="px-8 py-3 bg-brand-gold text-white rounded-xl font-bold hover:bg-yellow-600 shadow-md">Update</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</template>
+
+		</div>
+	}
+}

@@ -1,0 +1,63 @@
+package public
+
+import "e-commerce/views/layouts"
+
+templ CaraBelanjaPage(from string) {
+	@layouts.StaticLayout("Cara Belanja", from) {
+		<h1 class="text-3xl md:text-4xl font-bold text-black mb-6">Cara Belanja</h1>
+		
+		<p class="text-gray-700 text-sm md:text-base mb-10">
+			Ikuti cara-cara berikut untuk berbelanja di HostelMart dengan mudah
+		</p>
+
+		<div class="max-w-4xl mx-auto border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+			<div class="bg-[#FFFEE4] p-6 flex items-start gap-4 border-b border-gray-200 text-left">
+				<div class="bg-[#FFD596] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+					1
+				</div>
+				<div>
+					<h3 class="font-bold text-lg text-gray-800">Cari Produk</h3>
+					<p class="text-gray-600 text-sm md:text-base leading-relaxed">
+						Gunakan kolom pencarian yang ada di atas untuk menemukan barang yang ingin Anda beli.
+					</p>
+				</div>
+			</div>
+
+			<div class="bg-[#FFFEE4] p-6 flex items-start gap-4 border-b border-gray-200 text-left">
+				<div class="bg-[#FFD596] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+					2
+				</div>
+				<div>
+					<h3 class="font-bold text-lg text-gray-800">Tambahkan Ke Keranjang</h3>
+					<p class="text-gray-600 text-sm md:text-base leading-relaxed">
+						Klik tombol "Masukkan Ke Keranjang" pada halaman produk untuk menambahkan barang ke keranjang Anda.
+					</p>
+				</div>
+			</div>
+
+			<div class="bg-[#FFFEE4] p-6 flex items-start gap-4 border-b border-gray-200 text-left">
+				<div class="bg-[#FFD596] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+					3
+				</div>
+				<div>
+					<h3 class="font-bold text-lg text-gray-800">Checkout Pesanan</h3>
+					<p class="text-gray-600 text-sm md:text-base leading-relaxed">
+						Masuk ke halaman Keranjang, tinjau pesanan Anda, lalu klik tombol "Checkout" untuk melanjutkan ke proses pembayaran.
+					</p>
+				</div>
+			</div>
+
+			<div class="bg-[#FFFEE4] p-6 flex items-start gap-4 text-left">
+				<div class="bg-[#FFD596] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+					4
+				</div>
+				<div>
+					<h3 class="font-bold text-lg text-gray-800">Lakukan Pembayaran</h3>
+					<p class="text-gray-600 text-sm md:text-base leading-relaxed">
+						Pilih metode pembayaran yang diinginkan, dan selesaikan pembayaran Anda. Anda akan menerima konfirmasi pesanan di email.
+					</p>
+				</div>
+			</div>
+		</div>
+	}
+}

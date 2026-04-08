@@ -1,0 +1,34 @@
+package layouts
+
+templ StaticLayout(title string, from string) {
+    <!DOCTYPE html>
+    <html lang="id">
+        <head>
+            <meta charset="UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>{ title } - HostelMart</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+            <style>body { font-family: 'Poppins', sans-serif; }</style>
+        </head>
+        <body class="bg-white min-h-screen flex flex-col">
+            <nav class="p-6 text-gray-600 text-sm">
+                <div class="max-w-7xl mx-auto">
+                    <a href={ templ.SafeURL(from) } class="hover:text-black transition-colors">&lt; Beranda</a>
+                    <span class="mx-2">/</span>
+                    <span class="font-medium text-gray-800">{ title }</span>
+                </div>
+            </nav>
+
+            <main class="flex-grow px-6 pb-20">
+                <div class="max-w-4xl mx-auto text-center mt-10">
+                    { children... }
+                </div>
+            </main>
+
+            <footer class="bg-[#FFD596] py-4 border-t border-gray-300 text-center text-sm font-semibold">
+                © HostelMart 2026. All Rights Reserved
+            </footer>
+        </body>
+    </html>
+}

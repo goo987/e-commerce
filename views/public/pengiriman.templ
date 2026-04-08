@@ -1,0 +1,88 @@
+package public
+
+import "e-commerce/views/layouts"
+
+templ PengirimanPage(from string) {
+	@layouts.StaticLayout("Pengiriman", from) {
+		<h1 class="text-3xl md:text-4xl font-bold text-black mb-10">Pengiriman Pesanan</h1>
+		
+		<div class="max-w-4xl mx-auto text-left space-y-8 text-gray-800 text-sm md:text-base leading-relaxed">
+			<p>
+				Pengiriman pesanan di HostelMart dilakukan dengan cepat, aman, dan transparan. 
+				Berikut informasi lengkap mengenai proses pengiriman barang hingga pesanan diterima.
+			</p>
+
+			<section>
+				<h2 class="font-bold mb-3">Alur Pengiriman:</h2>
+				<ol class="space-y-4">
+					<li>
+						<span class="font-semibold">1. Pesanan Diproses</span>
+						<p class="text-gray-600 ml-4">Setelah pembayaran berhasil, pesanan akan diproses oleh penjual dan disiapkan untuk pengiriman.</p>
+					</li>
+					<li>
+						<span class="font-semibold">2. Pesanan Dikemas</span>
+						<p class="text-gray-600 ml-4">Produk dikemas dengan aman untuk menjaga kualitas barang selama proses pengiriman.</p>
+					</li>
+					<li>
+						<span class="font-semibold">3. Pesanan Dikirim</span>
+						<p class="text-gray-600 ml-4">Barang diserahkan ke jasa pengiriman. Nomor resi akan tersedia di halaman detail pesanan.</p>
+					</li>
+					<li>
+						<span class="font-semibold">4. Pesanan Diterima</span>
+						<p class="text-gray-600 ml-4">Pesanan sampai ke alamat tujuan sesuai dengan estimasi waktu pengiriman.</p>
+					</li>
+				</ol>
+			</section>
+
+			<section>
+				<h2 class="font-bold mb-2">Jasa Pengiriman</h2>
+				<p class="mb-2">HostelMart bekerja sama dengan berbagai jasa pengiriman terpercaya, antara lain:</p>
+				<ul class="list-disc list-inside ml-4 space-y-1 text-gray-600">
+					<li>JNE</li>
+					<li>J&T Express</li>
+					<li>SiCepat</li>
+					<li>AnterAja</li>
+				</ul>
+				<p class="mt-2 italic text-xs text-gray-500 italic">Jasa pengiriman yang tersedia dapat berbeda tergantung lokasi pengiriman.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold mb-2">Estimasi Waktu Pengiriman</h2>
+				<ul class="list-disc list-inside ml-4 space-y-1 text-gray-600">
+					<li>Dalam kota: 1 - 2 hari kerja</li>
+					<li>Luar kota: 2 - 5 hari kerja</li>
+					<li>Daerah terpencil: Menyesuaikan dengan kebijakan jasa pengiriman</li>
+				</ul>
+				<p class="mt-2 text-gray-600">Estimasi waktu dapat berubah tergantung kondisi cuaca dan operasional ekspedisi.</p>
+			</section>
+
+			<section>
+				<h2 class="font-bold mb-2">Biaya Pengiriman</h2>
+				<p class="mb-2">Biaya pengiriman dihitung secara otomatis saat proses checkout berdasarkan:</p>
+				<ul class="list-disc list-inside ml-4 space-y-1 text-gray-600">
+					<li>Berat produk</li>
+					<li>Alamat tujuan</li>
+					<li>Jasa pengiriman yang dipilih</li>
+				</ul>
+			</section>
+
+			<section class="bg-gray-50 p-6 rounded-xl border border-gray-100">
+				<h2 class="font-bold mb-4 text-lg">Pertanyaan Umum (FAQ)</h2>
+				<div class="space-y-4">
+					<div>
+						<p class="font-semibold">Mengapa pesanan saya belum dikirim?</p>
+						<p class="text-gray-600">Pesanan akan diproses maksimal 1x24 jam setelah pembayaran berhasil.</p>
+					</div>
+					<div>
+						<p class="font-semibold">Di mana saya bisa melihat nomor resi?</p>
+						<p class="text-gray-600">Nomor resi dapat dilihat pada halaman Detail Pesanan di akun Anda.</p>
+					</div>
+					<div>
+						<p class="font-semibold">Barang belum sampai atau bermasalah?</p>
+						<p class="text-gray-600">Silakan hubungi kami melalui halaman Hubungi Kami untuk mendapatkan bantuan lebih lanjut.</p>
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}

@@ -1,0 +1,8 @@
+*.exe
+*.log
+*.exe~
+/bukti_transfer/
+/static/uploads/
+/uploads/
+*_templ.go
+.air.toml

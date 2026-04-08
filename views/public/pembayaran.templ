@@ -1,0 +1,221 @@
+package public
+
+import (
+	"e-commerce/internal/repository"
+	"strconv"
+)
+
+templ Pembayaran(order repository.Order) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Selesaikan Pembayaran - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"/>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-blue-btn': '#1D4ED8',
+                                'box-bg': '#E8EFFF',
+                                'pink-bg': '#FF94A2',
+                            },
+                            fontFamily: {
+                                sans: ['Poppins', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+            </script>
+			<style>
+                [x-cloak] { display: none !important; }
+                body { background-color: #f9f9f9; }
+            </style>
+		</head>
+		<body
+			class="font-sans min-h-screen text-gray-800"
+			x-data="{ 
+                showSuccess: false, 
+                isUploading: false, 
+                fileName: '',
+                norek: '08968575755753(BCA)', 
+                copied: false 
+            }"
+		>
+			<div class="w-full max-w-lg mx-auto py-10 px-4 space-y-6" x-show="!showSuccess" x-transition>
+				<div class="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+					<div class="p-4 border-b border-gray-100">
+						<h2 class="text-sm font-bold text-gray-800">Ringkasan Pesanan #{ order.OrderID }</h2>
+					</div>
+					<div class="divide-y divide-gray-100">
+						for _, item := range order.Items {
+							<div class="p-4 flex items-center justify-between">
+								<div class="flex items-center gap-3">
+									<div class="w-14 h-14 border border-gray-200 rounded flex items-center justify-center p-1 bg-white shrink-0">
+										if item.Image != "" {
+											<img src={ "/image/" + item.Image } alt={ item.ProductName } class="max-w-full max-h-full object-contain"/>
+										} else {
+											<div class="w-8 h-8 bg-gray-100 rounded"></div>
+										}
+									</div>
+									<div class="flex flex-col">
+										<span class="text-[13px] font-medium text-gray-700 leading-tight">{ item.ProductName }</span>
+										<span class="text-[11px] text-gray-500">{ strconv.Itoa(item.Quantity) }x</span>
+									</div>
+								</div>
+								<span class="text-[13px] font-semibold text-gray-800">Rp. { strconv.Itoa(item.Price * item.Quantity) }</span>
+							</div>
+						}
+					</div>
+
+					<div class="p-4 space-y-2 text-[13px] border-t border-gray-100">
+						<div class="flex justify-between text-gray-700">
+							<div class="flex w-32 justify-between">
+								<span>Subtotal Produk</span>
+								<span>:</span>
+							</div>
+							<span class="font-medium">Rp. { strconv.Itoa(order.Total - order.ShippingCost) }</span>
+						</div>
+						<div class="flex justify-between text-gray-700">
+							<div class="flex w-32 justify-between">
+								<span>Ongkos Kirim</span>
+								<span>:</span>
+							</div>
+							<span class="font-medium">Rp. { strconv.Itoa(order.ShippingCost) }</span>
+						</div>
+						<div class="border-t border-gray-200 pt-3 mt-2 flex justify-between font-bold text-gray-900">
+							<span>Total Bayar:</span>
+							<span>Rp. { strconv.Itoa(order.Total) }</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-box-bg border border-gray-200 rounded-lg p-5 flex items-center justify-between shadow-sm">
+					<span class="text-lg font-bold tracking-wider text-gray-800" x-text="norek"></span>
+					<button
+						type="button"
+						@click="navigator.clipboard.writeText(norek); copied = true; setTimeout(() => copied = false, 2000)"
+						class="w-10 h-10 bg-white border border-gray-200 rounded-full shadow-sm flex items-center justify-center active:scale-90 transition-all"
+					>
+						<template x-if="!copied">
+							<svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+						</template>
+						<template x-if="copied">
+							<i class="fas fa-check text-green-500"></i>
+						</template>
+					</button>
+				</div>
+
+				<div class="bg-pink-bg rounded-lg p-6 shadow-sm">
+					<h3 class="text-[13px] font-bold text-gray-900 leading-snug mb-4">
+						Untuk menyelesaikan pembayaran, silakan lakukan transfer melalui aplikasi M-Banking dengan langkah berikut :
+					</h3>
+					<ol class="list-decimal list-outside ml-4 space-y-1.5 text-[13px] text-gray-900 font-medium leading-relaxed">
+						<li>Buka aplikasi M-Banking di ponsel Anda</li>
+						<li>Login menggunakan PIN / Password / Biometrik</li>
+						<li>Pilih menu "Transfer"</li>
+						<li>Pilih "Ke Rekening Lain / Antar Bank"</li>
+						<li>Pilih bank tujuan sesuai informasi pembayaran</li>
+						<li>Masukkan nomor rekening tujuan</li>
+						<li>Masukkan jumlah transfer <span class="font-bold underline">Rp { strconv.Itoa(order.Total) }</span></li>
+						<li>Periksa kembali detail pembayaran</li>
+						<li>Masukkan PIN M-Banking / OTP</li>
+						<li>Transaksi berhasil - simpan bukti transfer</li>
+					</ol>
+				</div>
+
+				<form
+					@submit.prevent="
+						isUploading = true;
+						const formData = new FormData($el);
+						fetch('/konfirmasi-pembayaran', {
+							method: 'POST',
+							body: formData
+						})
+						.then(res => res.json())
+						.then(data => {
+							isUploading = false;
+							if(data.status === 'success') { 
+								showSuccess = true; 
+							} else { 
+								alert(data.message || 'Gagal mengirim konfirmasi.'); 
+							}
+						})
+						.catch(err => {
+							isUploading = false;
+							alert('Terjadi kesalahan koneksi.');
+						})
+					"
+					class="space-y-6 flex flex-col items-center"
+				>
+					<input type="hidden" name="order_id" value={ order.OrderID }/>
+					<div class="w-full flex flex-col items-center gap-3">
+						<label class="text-[13px] font-medium text-gray-700">Masukkan Email anda untuk mengkonfirmasi</label>
+						<input
+							type="email"
+							name="email"
+							value={ order.Email }
+							placeholder="Masukkan Email Anda"
+							class="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-blue-400"
+							required
+						/>
+					</div>
+					<div class="w-full flex justify-start">
+						<label
+							for="payment_proof"
+							class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded text-gray-600 cursor-pointer hover:bg-gray-50 active:bg-gray-100 shadow-sm"
+						>
+							<i class="fas fa-upload text-blue-600 text-xs"></i>
+							<span class="text-[12px] font-semibold text-blue-900" x-text="fileName ? fileName : 'Upload bukti pembayaran'"></span>
+						</label>
+						<input
+							type="file"
+							id="payment_proof"
+							name="payment_proof"
+							class="hidden"
+							accept="image/*"
+							required
+							@change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''"
+						/>
+					</div>
+					<button
+						type="submit"
+						:disabled="isUploading || !fileName"
+						class="w-full bg-h-blue-btn text-white font-bold py-3.5 rounded-lg transition-all active:scale-[0.98] disabled:opacity-50 text-base"
+					>
+						<span x-show="!isUploading">Kirim Konfirmasi</span>
+						<span x-show="isUploading" class="flex items-center justify-center gap-2">
+							<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							Memproses...
+						</span>
+					</button>
+				</form>
+			</div>
+
+			<div
+				x-show="showSuccess"
+				x-cloak
+				class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+			>
+				<div class="bg-white rounded-3xl p-8 max-w-xs w-full text-center space-y-5 shadow-xl">
+					<div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+						<i class="fas fa-check text-3xl text-green-500"></i>
+					</div>
+					<h2 class="text-xl font-bold text-gray-900">Pembayaran Berhasil Dikirim</h2>
+					<p class="text-[13px] text-gray-500">Mohon tunggu verifikasi tim kami maksimal 1x24 jam.</p>
+					<button @click="window.location.href='/'" class="w-full bg-h-blue-btn text-white font-bold py-3 rounded-xl">
+						Kembali ke Home
+					</button>
+				</div>
+			</div>
+		</body>
+	</html>
+}

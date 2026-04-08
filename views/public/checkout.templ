@@ -1,0 +1,333 @@
+package public
+
+import (
+	"e-commerce/internal/repository"
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+func sumSubtotal(products []repository.Product) int {
+	total := 0
+	for _, p := range products {
+		total += (p.Price * p.CartQty)
+	}
+	return total
+}
+
+func formatMoney(amount int) string {
+	s := strconv.Itoa(amount)
+	if len(s) <= 3 {
+		return s
+	}
+	var res []string
+	for len(s) > 3 {
+		res = append([]string{s[len(s)-3:]}, res...)
+		s = s[:len(s)-3]
+	}
+	res = append([]string{s}, res...)
+	return strings.Join(res, ".")
+}
+
+templ Checkout(selectedProducts []repository.Product, user repository.User) {
+	{{
+		subtotal := sumSubtotal(selectedProducts)
+		ongkir := 20000
+		totalBayar := subtotal + ongkir
+
+		var idList []string
+		for _, p := range selectedProducts {
+			idList = append(idList, strconv.Itoa(p.ID))
+		}
+		selectedIdsJoined := strings.Join(idList, ",")
+	}}
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Checkout - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-cream': '#FFFEE4',
+                                'h-gold': '#AD861C',
+                                'h-yellow-soft': '#FFF9A6',
+                                'h-blue-btn': '#1D4ED8',
+                            },
+                            fontFamily: {
+                                sans: ['Poppins', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+            </script>
+			<style>
+                [x-cloak] { display: none !important; }
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+                body { overflow-x: hidden; }
+            </style>
+		</head>
+		<body
+			class="bg-white font-sans text-gray-800"
+			x-data="{ 
+                paymentMethod: '', 
+                showSuccessModal: false,
+                showErrorModal: false,
+                showWarningModal: false,
+                errorMessage: '',
+                warningMessage: '',
+                isLoading: false,
+
+                async handleCheckout() {
+                    if (!this.paymentMethod) return;
+                    
+                    this.isLoading = true;
+                    const formData = new FormData(this.$refs.checkoutForm);
+                    
+                    try {
+                        const response = await fetch('/proses-checkout', { 
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.status === 'success') {
+                            if (this.paymentMethod === 'transfer') {
+                                window.location.href = '/pembayaran/' + result.order_id;
+                            } else {
+                                this.showSuccessModal = true;
+                            }
+                        } else {
+                            this.errorMessage = result.message || 'Gagal membuat pesanan.';
+                            this.showErrorModal = true;
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        this.errorMessage = 'Terjadi kesalahan koneksi server.';
+                        this.showErrorModal = true;
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            }"
+		>
+			<div
+				x-show="showSuccessModal"
+				class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+				x-cloak
+			>
+				<div
+					class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center shadow-2xl"
+					@click.away="window.location.href='/'"
+				>
+					<div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-500 mx-auto mb-6">
+						<i class="fas fa-check text-3xl"></i>
+					</div>
+					<h2 class="text-2xl font-extrabold text-gray-900 mb-2">Pesanan Berhasil</h2>
+					<p class="text-gray-500 mb-8 text-sm">
+						Pesanan COD Anda telah kami terima. Mohon siapkan pembayaran saat kurir sampai di lokasi Anda.
+					</p>
+					<a href="/" class="block w-full bg-h-blue-btn hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-200">
+						Kembali ke Beranda
+					</a>
+				</div>
+			</div>
+			<div
+				x-show="showErrorModal"
+				class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+				x-cloak
+			>
+				<div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center shadow-2xl">
+					<div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-500 mx-auto mb-6">
+						<i class="fas fa-exclamation-triangle text-3xl"></i>
+					</div>
+					<h2 class="text-2xl font-extrabold text-gray-900 mb-2">Checkout Gagal</h2>
+					<p class="text-gray-500 mb-8 text-sm" x-text="errorMessage"></p>
+					<button @click="showErrorModal = false" class="block w-full bg-gray-800 text-white font-bold py-4 rounded-2xl transition-all">
+						Coba Lagi
+					</button>
+				</div>
+			</div>
+			<div
+				x-show="showWarningModal"
+				class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+				x-cloak
+			>
+				<div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center shadow-2xl">
+					<div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center text-orange-500 mx-auto mb-6">
+						<i class="fas fa-user-edit text-3xl"></i>
+					</div>
+					<h2 class="text-2xl font-extrabold text-gray-900 mb-2">Data Belum Lengkap</h2>
+					<p class="text-gray-500 mb-8 text-sm" x-text="warningMessage"></p>
+					<div class="space-y-3">
+						<a href="/akun" class="block w-full bg-h-blue-btn text-white font-bold py-4 rounded-2xl transition-all">
+							Lengkapi Profil
+						</a>
+						<button @click="showWarningModal = false" class="block w-full bg-gray-100 text-gray-600 font-bold py-4 rounded-2xl transition-all">
+							Tutup
+						</button>
+					</div>
+				</div>
+			</div>
+			<header class="bg-h-cream py-4 px-6 shadow-sm border-b border-yellow-100 sticky top-0 z-40">
+				<div class="max-w-7xl mx-auto flex items-center gap-4">
+					<div class="flex items-center gap-2">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-bold text-xl tracking-tight uppercase">HOSTEL MART</span>
+					</div>
+				</div>
+			</header>
+			<main class="max-w-7xl mx-auto px-6 py-10">
+				<div class="mb-8">
+					<a href="/keranjang" class="inline-flex items-center gap-2 bg-[#FFF9A6] border border-gray-200 rounded-lg px-4 py-2 text-black hover:bg-yellow-200 transition duration-300 shadow-md font-medium text-sm">
+						<i class="fas fa-arrow-left text-xs text-black"></i> kembali ke keranjang
+					</a>
+				</div>
+				<h1 class="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">Checkout</h1>
+				<form x-ref="checkoutForm" @submit.prevent="handleCheckout()">
+					<input type="hidden" name="selected_ids" value={ selectedIdsJoined }/>
+					<input type="hidden" name="total_bayar" value={ fmt.Sprintf("%d", totalBayar) }/>
+					<input type="hidden" name="shipping_cost" value={ fmt.Sprintf("%d", ongkir) }/>
+					<div class="flex flex-col lg:flex-row gap-12">
+						<div class="flex-1 space-y-8">
+							<div class="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
+								<div>
+									<label class="block font-bold text-gray-700 mb-3 ml-1">Nama Penerima</label>
+									<input type="text" name="nama" value={ user.Username } readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 font-medium text-gray-600 cursor-not-allowed outline-none"/>
+								</div>
+								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div>
+										<label class="block font-bold text-gray-700 mb-3 ml-1">Nomor Telepon</label>
+										<input x-ref="phoneInput" type="text" name="phone" value={ user.Phone } readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 font-medium text-gray-600 cursor-not-allowed outline-none"/>
+										if user.Phone == "" {
+											<p class="text-red-500 text-[10px] mt-2 ml-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i>Nomor telepon kosong</p>
+										}
+									</div>
+									<div>
+										<label class="block font-bold text-gray-700 mb-3 ml-1">Email</label>
+										<input type="email" name="email" value={ user.Email } readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 font-medium text-gray-600 cursor-not-allowed outline-none"/>
+									</div>
+								</div>
+								<div>
+									<label class="block font-bold text-gray-700 mb-3 ml-1">Alamat Pengiriman</label>
+									<textarea x-ref="alamatInput" name="alamat" readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 h-32 resize-none font-medium text-gray-600 cursor-not-allowed outline-none">{ user.Alamat }</textarea>
+									if user.Alamat == "" {
+										<div class="flex items-center gap-2 text-red-500 text-xs mt-3 ml-1 font-medium bg-red-50 p-3 rounded-xl">
+											<i class="fas fa-exclamation-circle"></i>
+											<span>Alamat pengiriman kosong. Harap lengkapi di menu profil.</span>
+										</div>
+									}
+								</div>
+								<div>
+									<label class="block font-bold text-gray-700 mb-4 ml-1">Metode Pembayaran</label>
+									<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<label
+											class="relative flex items-center justify-between border-2 rounded-2xl p-5 cursor-pointer transition-all hover:bg-gray-50"
+											:class="paymentMethod === 'transfer' ? 'border-h-blue-btn bg-blue-50/30' : 'border-gray-100'"
+										>
+											<div class="flex items-center gap-4">
+												<div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-h-blue-btn">
+													<i class="fas fa-university text-xl"></i>
+												</div>
+												<div>
+													<p class="font-bold text-gray-800 text-sm">Transfer Bank</p>
+													<p class="text-[10px] text-gray-500">Verifikasi manual</p>
+												</div>
+											</div>
+											<input type="radio" name="payment_method" value="transfer" x-model="paymentMethod" required class="w-5 h-5 accent-h-blue-btn"/>
+										</label>
+										<label
+											class="relative flex items-center justify-between border-2 rounded-2xl p-5 cursor-pointer transition-all hover:bg-gray-50"
+											:class="paymentMethod === 'cod' ? 'border-h-blue-btn bg-blue-50/30' : 'border-gray-100'"
+										>
+											<div class="flex items-center gap-4">
+												<div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+													<i class="fas fa-truck text-xl"></i>
+												</div>
+												<div>
+													<p class="font-bold text-gray-800 text-sm">COD (Bayar Ditempat)</p>
+													<p class="text-[10px] text-gray-500">Tunai saat barang sampai</p>
+												</div>
+											</div>
+											<input type="radio" name="payment_method" value="cod" x-model="paymentMethod" required class="w-5 h-5 accent-h-blue-btn"/>
+										</label>
+									</div>
+								</div>
+								<button
+									type="submit"
+									class="w-full bg-h-blue-btn hover:bg-blue-700 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all active:scale-[0.98] text-lg disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+									disabled?={ user.Alamat == "" || user.Phone == "" }
+									:disabled="!paymentMethod || isLoading"
+								>
+									<template x-if="!isLoading">
+										<div class="flex items-center gap-2">
+											<i class="fas fa-shield-check text-sm opacity-50"></i>
+											<span x-text="paymentMethod === 'transfer' ? 'Bayar Sekarang' : 'Konfirmasi Pesanan'"></span>
+										</div>
+									</template>
+									<div x-show="isLoading" class="flex items-center gap-2" x-cloak>
+										<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+											<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+											<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										<span>Memproses Pesanan...</span>
+									</div>
+								</button>
+							</div>
+						</div>
+						<div class="w-full lg:w-[450px]">
+							<div class="bg-gray-50 border border-gray-100 rounded-[2.5rem] p-8 sticky top-28 shadow-sm">
+								<h2 class="font-extrabold text-2xl mb-8 text-gray-900 flex items-center gap-3">
+									<i class="fas fa-shopping-bag text-h-gold"></i>
+									Ringkasan
+								</h2>
+								<div class="space-y-6 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar mb-8">
+									for _, p := range selectedProducts {
+										<div class="flex gap-4 items-center group">
+											<div class="w-16 h-16 bg-white border border-gray-200 rounded-xl p-1 flex-shrink-0 shadow-sm">
+												<img src={ "/image/" + p.Image } alt={ p.Name } class="w-full h-full object-contain"/>
+											</div>
+											<div class="flex-1 min-w-0">
+												<h4 class="font-bold text-gray-900 truncate text-sm">{ p.Name }</h4>
+												<div class="flex items-center justify-between mt-1">
+													<p class="text-xs text-h-gold font-bold">Rp { formatMoney(p.Price) }</p>
+													<span class="text-gray-400 text-xs">x{ strconv.Itoa(p.CartQty) }</span>
+												</div>
+											</div>
+										</div>
+									}
+								</div>
+								<div class="border-t border-gray-200 pt-6 space-y-4">
+									<div class="flex justify-between text-gray-500 text-sm">
+										<span>Subtotal</span>
+										<span class="text-gray-900 font-bold">Rp { formatMoney(subtotal) }</span>
+									</div>
+									<div class="flex justify-between text-gray-500 text-sm">
+										<span>Biaya Pengiriman</span>
+										<span class="text-gray-900 font-bold">Rp { formatMoney(ongkir) }</span>
+									</div>
+									<div class="pt-4 border-t-2 border-dashed border-gray-200">
+										<div class="flex justify-between items-center">
+											<span class="text-gray-900 font-extrabold text-lg">Total</span>
+											<span class="text-2xl font-black text-h-blue-btn">Rp { formatMoney(totalBayar) }</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+			</main>
+		</body>
+	</html>
+}

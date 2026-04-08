@@ -1,0 +1,269 @@
+package public
+
+import "e-commerce/internal/repository"
+
+templ Homepage(products []repository.Product, isLoggedIn bool) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Hostel Mart - Home</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet"/>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-cream': '#FFFEE4',
+                                'h-gold': '#AD861C',
+                                'h-blue': '#0E2865',
+                                'h-dark': '#000000',
+                                'h-footer-bottom': '#FFD18C'
+                            },
+                            fontFamily: {
+                                poppins: ['Poppins', 'sans-serif'],
+                                inter: ['Inter', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+            </script>
+			<style>
+                body { font-family: 'Inter', sans-serif; }
+
+                .search-placeholder::placeholder {
+                    color: #AD861C;
+                    opacity: 0.8;
+                }
+
+                .custom-shadow {
+                    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+                }
+                
+                [x-cloak] { display: none !important; }
+            </style>
+		</head>
+		<body
+			class="bg-white font-inter"
+			x-data={ templ.JSONString(map[string]interface{}{
+                "searchQuery": "",
+                "products": products,
+            }) }
+		>
+			<header class="bg-h-cream py-3 px-6 shadow-sm sticky top-0 z-[100]">
+				<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+					<div class="flex items-center gap-2 min-w-fit">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-poppins font-bold text-xl tracking-tight">
+							HOSTEL MART
+						</span>
+					</div>
+					<div class="flex-1 max-w-2xl relative" x-data="{ showSuggestions: false }">
+						<input
+							type="text"
+							placeholder="Cari di HostelMart"
+							x-model="searchQuery"
+							@input="showSuggestions = true"
+							@click.away="showSuggestions = false"
+							@keydown.escape="showSuggestions = false"
+							class="w-full bg-[#FFD18C] rounded-full py-2 px-12 focus:outline-none text-h-gold font-medium search-placeholder"
+						/>
+						<i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-h-gold"></i>
+						<div
+							x-show="showSuggestions && searchQuery.length > 0"
+							x-cloak
+							class="absolute top-full left-0 right-0 bg-white mt-2 rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[110]"
+						>
+							<template x-for="p in products.filter(i => i.Name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5)" :key="p.ID">
+								<a :href="'/produk/' + p.ID" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-none">
+									<i class="fas fa-search text-gray-400 text-xs"></i>
+									<span class="text-gray-700 text-sm" x-text="p.Name"></span>
+								</a>
+							</template>
+							<div x-show="products.filter(i => i.Name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0" class="p-4 text-center text-gray-400 text-sm">
+								Produk tidak ditemukan
+							</div>
+						</div>
+					</div>
+					<div class="flex items-center gap-6">
+						if isLoggedIn {
+							<a href="/keranjang" class="hover:text-h-blue transition text-black relative">
+								<i class="fas fa-shopping-cart text-xl"></i>
+							</a>
+						} else {
+							<a href="/register" class="hover:text-h-blue transition text-black">
+								<i class="fas fa-shopping-cart text-xl"></i>
+							</a>
+						}
+						if isLoggedIn {
+							<a href="/akun" class="hover:text-h-blue transition text-black flex items-center gap-2">
+								<i class="far fa-user text-xl"></i>
+							</a>
+						} else {
+							<div class="flex items-center gap-3 border-l border-gray-300 pl-6">
+								<a href="/register" class="text-sm font-semibold text-gray-700 hover:text-h-gold transition">Daftar</a>
+								<span class="text-gray-300">|</span>
+								<a href="/login" class="text-sm font-semibold text-gray-700 hover:text-h-gold transition">Masuk</a>
+							</div>
+						}
+					</div>
+				</div>
+			</header>
+			<main class="max-w-7xl mx-auto px-6 py-10">
+				<section class="flex flex-col md:flex-row items-center justify-between mb-10 relative">
+					<div class="md:w-1/2 relative z-10">
+						<h1 class="text-5xl font-extrabold font-poppins text-black mb-4 leading-tight">
+							Belanja Mudah,
+							<br/>
+							Murah, Tanpa Ribet
+						</h1>
+						<p class="text-gray-700 text-lg mb-8 italic">
+							Dukung produk lokal pilihan, harga terjangkau dan
+							transaksi aman di Hostel Mart
+						</p>
+						<div class="flex gap-4">
+							<button class="bg-h-blue text-white px-8 py-3 rounded-md font-semibold hover:bg-opacity-90 transition">
+								Belanja Sekarang
+							</button>
+							<button class="bg-white border-2 border-h-blue text-h-blue px-8 py-3 rounded-md font-semibold hover:bg-gray-50 transition">
+								Lihat Promo
+							</button>
+						</div>
+					</div>
+					<div class="md:w-1/2 flex justify-end relative z-0">
+						<img
+							src="/image/banner.png"
+							alt="Banner"
+							class="w-[750px] md:w-[850px] lg:w-[950px] object-contain scale-125 md:scale-[1.8] origin-right translate-y-4"
+						/>
+					</div>
+				</section>
+				<div class="bg-white relative z-20 custom-shadow border border-gray-100 rounded-lg py-6 px-10 mb-16 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-0">
+					<div class="flex items-center gap-4">
+						<i class="fas fa-shield-alt text-3xl text-black"></i>
+						<span class="font-poppins font-medium text-lg">100% Aman</span>
+					</div>
+					<div class="flex items-center gap-4">
+						<i class="fas fa-truck text-3xl text-black"></i>
+						<span class="font-poppins font-medium text-lg">Gratis Ongkir</span>
+					</div>
+					<div class="flex items-center gap-4">
+						<div class="flex text-yellow-400 text-sm">
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+						</div>
+						<span class="font-poppins font-medium text-lg">Kualitas Terpercaya</span>
+					</div>
+				</div>
+				<div x-show="products.filter(i => i.Name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0" class="text-center py-20" x-cloak>
+					<i class="fas fa-box-open text-6xl text-h-gold mb-6"></i>
+					<h2 class="text-2xl font-poppins font-semibold mb-3">Produk Tidak Ditemukan</h2>
+					<p class="text-gray-600 mb-6">Maaf, kata kunci "<span x-text="searchQuery" class="font-bold"></span>" tidak cocok dengan produk manapun.</p>
+					<button @click="searchQuery = ''" class="bg-h-blue text-white px-6 py-3 rounded-md font-semibold hover:bg-opacity-90 transition">Hapus Pencarian</button>
+				</div>
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-10">
+					<template x-for="product in products.filter(i => i.Name.toLowerCase().includes(searchQuery.toLowerCase()))" :key="product.ID">
+						<a :href="'/produk/' + product.ID" class="block bg-h-cream border border-h-gold/40 rounded-xl p-4 custom-shadow flex flex-col h-[400px] transition hover:-translate-y-1 hover:shadow-lg duration-300">
+							<div class="bg-white border border-gray-200 rounded-md p-4 mb-4 h-56 flex items-center justify-center overflow-hidden">
+								<img :src="'/image/' + product.Image" :alt="product.Name" class="max-h-full max-w-full object-contain"/>
+							</div>
+							<h3 class="font-poppins font-semibold text-sm mb-1 line-clamp-2 h-10" x-text="product.Name"></h3>
+							<p class="text-h-gold font-bold text-base mb-3" x-text="'Rp ' + product.Price.toLocaleString('id-ID')"></p>
+							<div class="mt-auto flex flex-col gap-1">
+								<p class="text-gray-500 text-[11px] font-medium flex items-center gap-1">
+									<i class="fas fa-archive text-[10px]"></i>
+									Stok: <span x-text="product.Stock"></span>
+								</p>
+								<p class="text-gray-500 text-xs font-medium">
+									<template x-if="product.Sold > 0">
+										<div>
+											<i class="fas fa-shopping-bag mr-1 text-[10px]"></i>
+											<span x-text="product.Sold + ' Terjual'"></span>
+										</div>
+									</template>
+									<template x-if="product.Sold <= 0">
+										<span class="italic text-gray-400">Belum ada penjualan</span>
+									</template>
+								</p>
+							</div>
+						</a>
+					</template>
+				</div>
+			</main>
+			<footer class="bg-h-cream pt-10 border-t border-gray-100 font-inter">
+				<div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
+					<div class="md:col-span-4">
+						<div class="flex items-center gap-3 mb-5">
+							<img src="/image/logo.png" alt="Logo" class="h-12 w-auto"/>
+							<span class="text-h-gold font-poppins font-bold text-3xl tracking-tight">
+								HOSTEL MART
+							</span>
+						</div>
+						<p class="text-base text-gray-800 leading-relaxed font-medium mb-8 max-w-sm">
+							Hostel Mart adalah e-commerce yang mendukung produk lokal dengan sistem 
+							belanja yang mudah, simple, dan terpercaya
+						</p>
+						<p class="text-sm font-semibold text-black">
+							© HostelMart 2026. All Rights Reserved.
+						</p>
+					</div>
+					<div class="md:col-span-2">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Layanan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li><a href="/tentang-kami" class="hover:text-h-gold transition">Tentang Kami</a></li>
+							<li><a href="/" class="hover:text-h-gold transition">Produk</a></li>
+							<li><a href="/keranjang" class="hover:text-h-gold transition">Keranjang</a></li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Bantuan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium leading-relaxed">
+							<li><a href="/cara-belanja" class="hover:text-h-gold transition">Cara Belanja</a></li>
+							<li><a href="/metode-pembayaran" class="hover:text-h-gold transition">Metode Pembayaran</a></li>
+							<li><a href="/pengiriman" class="hover:text-h-gold transition">Pengiriman</a></li>
+							<li>
+								<li>
+									<a href="/syarat-ketentuan" class="hover:text-h-gold transition text-base font-medium leading-relaxed">
+										Syarat & Ketentuan dan Kebijakan Privasi
+										<span class="text-h-gold font-bold ml-1 text-lg">>></span>
+									</a>
+								</li>
+							</li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Hubungi Kami</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li class="flex items-center gap-3">
+								<i class="fas fa-envelope text-black"></i>
+								<span>HostelMart@gmail.com</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-phone-alt text-black"></i>
+								<span>0821-3465-7892</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-map-marker-alt text-black"></i>
+								<span>Indonesia</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="bg-h-footer-bottom py-6 border-t border-black/10">
+					<p class="text-base font-semibold text-black text-center">
+						© HostelMart 2026. All Rights Reserved.
+					</p>
+				</div>
+			</footer>
+		</body>
+	</html>
+}

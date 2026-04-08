@@ -1,0 +1,257 @@
+package petugas
+
+import (
+	"e-commerce/internal/repository"
+	"e-commerce/views/layouts"
+	"fmt"
+	"time"
+)
+
+templ Laporan(data repository.LaporanData) {
+	@layouts.BasePetugas("Laporan", "laporan") {
+		<style>
+			@media print {
+				/* Memaksa browser mencetak warna latar belakang dan gradient */
+				* {
+					-webkit-print-color-adjust: exact !important;
+					print-color-adjust: exact !important;
+					color-adjust: exact !important;
+				}
+
+				/* Sembunyikan sidebar, header, dan elemen navigasi lainnya */
+				body * {
+					visibility: hidden;
+				}
+
+				/* Tampilkan hanya area statistik */
+				#print-area, #print-area * {
+					visibility: visible;
+				}
+
+				/* Atur posisi area cetak ke pojok kiri atas */
+				#print-area {
+					position: absolute;
+					left: 0;
+					top: 0;
+					width: 100%;
+					border: none !important;
+					shadow: none !important;
+					padding: 0 !important;
+					margin: 0 !important;
+				}
+
+				/* Sembunyikan tombol filter dan tombol unduh saat dicetak */
+				.no-print {
+					display: none !important;
+				}
+			}
+		</style>
+
+		<div class="space-y-6" x-data="{ 
+			tabTransaksi: 1, 
+			perPageTransaksi: 5,
+			tabStok: 1,
+			perPageStok: 5,
+			showDetail: false,
+			selectedOrder: null,
+			totalPageTransaksi() { return Math.ceil(parseInt($el.dataset.totalTransaksi) / this.perPageTransaksi) },
+			totalPageStok() { return Math.ceil(parseInt($el.dataset.totalStok) / this.perPageStok) },
+			exportToCSV(tableId, filename) {
+				let csv = [];
+				let rows = document.querySelectorAll(`#${tableId} tr`);
+				for (let i = 0; i < rows.length; i++) {
+					let row = [], cols = rows[i].querySelectorAll('td, th');
+					for (let j = 0; j < cols.length; j++) {
+						let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/,/g, ';').trim();
+						row.push(data);
+					}
+					csv.push(row.join(','));
+				}
+				let csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+				let downloadLink = document.createElement('a');
+				downloadLink.download = filename;
+				downloadLink.href = window.URL.createObjectURL(csvFile);
+				downloadLink.style.display = 'none';
+				document.body.appendChild(downloadLink);
+				downloadLink.click();
+			}
+		}" 
+		data-total-transaksi={ fmt.Sprint(len(data.Transaksi)) }
+		data-total-stok={ fmt.Sprint(len(data.Stok)) }>
+			
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+					<div class="p-5 flex justify-between items-center border-b border-gray-50">
+						<h3 class="font-bold text-gray-800">Laporan transaksi</h3>
+						<button @click="exportToCSV('table-transaksi', 'laporan-transaksi.csv')" class="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-50">
+							<i class="fas fa-download"></i> Unduh
+						</button>
+					</div>
+					<div class="overflow-x-auto flex-grow">
+						<table class="w-full text-[11px]" id="table-transaksi">
+							<thead class="bg-gray-50 text-gray-500 font-bold">
+								<tr>
+									<th class="px-4 py-3 text-left">ID Pesanan</th>
+									<th class="px-4 py-3 text-left">Tanggal</th>
+									<th class="px-4 py-3 text-left">Pembeli</th>
+									<th class="px-4 py-3 text-left">Total</th>
+									<th class="px-4 py-3 text-center">Aksi</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-50">
+								for i, t := range data.Transaksi {
+									<tr class="hover:bg-gray-50/50 transition-colors" 
+										x-show={ fmt.Sprintf("%d >= (tabTransaksi-1)*perPageTransaksi && %d < tabTransaksi*perPageTransaksi", i, i) }>
+										<td class="px-4 py-3 font-medium">#{ t.OrderID }</td>
+										<td class="px-4 py-3 text-gray-500">{ t.Date }</td>
+										<td class="px-4 py-3 text-gray-800 font-semibold">{ t.BuyerName }</td>
+										<td class="px-4 py-3 font-bold">Rp { fmt.Sprintf("%d", t.Total) }</td>
+										<td class="px-4 py-3 text-center">
+											<a href={ templ.SafeURL(fmt.Sprintf("/petugas/laporan/detail/%s", t.OrderID)) } class="text-blue-500 hover:text-blue-700">
+												<i class="fas fa-eye"></i>
+											</a>
+										</td>
+									</tr>
+								}
+								if len(data.Transaksi) == 0 {
+									<tr>
+										<td colspan="5" class="px-4 py-10 text-center text-gray-400">Belum ada data transaksi</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<div class="p-3 flex justify-between items-center border-t border-gray-50">
+						<span class="text-[10px] text-gray-500">Hal <span x-text="tabTransaksi"></span> dari <span x-text="totalPageTransaksi()"></span></span>
+						<div class="flex gap-1">
+							<button @click="if(tabTransaksi > 1) tabTransaksi--" 
+									:class="tabTransaksi <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-left"></i></button>
+							<button @click="if(tabTransaksi < totalPageTransaksi()) tabTransaksi++" 
+									:class="tabTransaksi >= totalPageTransaksi() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-right"></i></button>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+					<div class="p-5 flex justify-between items-center border-b border-gray-50">
+						<h3 class="font-bold text-gray-800">Laporan Stok</h3>
+						<button @click="exportToCSV('table-stok', 'laporan-stok.csv')" class="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-50">
+							<i class="fas fa-download"></i> Unduh
+						</button>
+					</div>
+					<div class="overflow-x-auto flex-grow">
+						<table class="w-full text-[11px]" id="table-stok">
+							<thead class="bg-gray-50 text-gray-500 font-bold">
+								<tr>
+									<th class="px-4 py-3 text-left">Produk</th>
+									<th class="px-4 py-3 text-center">Masuk</th>
+									<th class="px-4 py-3 text-center text-orange-500">Terjual</th>
+									<th class="px-4 py-3 text-center">Tersisa</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-100">
+								for i, s := range data.Stok {
+									<tr x-show={ fmt.Sprintf("%d >= (tabStok-1)*perPageStok && %d < tabStok*perPageStok", i, i) }>
+										<td class="px-4 py-2 flex items-center gap-3">
+											<div class="w-10 h-10 bg-gray-50 rounded p-1 border border-gray-100 flex-shrink-0">
+												if s.Image != "" {
+													<img src={ "/image/" + s.Image } class="w-full h-full object-contain mix-blend-multiply"/>
+												} else {
+													<div class="w-full h-full flex items-center justify-center text-gray-300"><i class="fas fa-image"></i></div>
+												}
+											</div>
+											<span class="font-semibold text-gray-700 truncate max-w-[120px]">{ s.Name }</span>
+										</td>
+										<td class="px-4 py-2 text-center font-bold text-gray-600">{ fmt.Sprint(s.StokMasuk) }</td>
+										<td class="px-4 py-2 text-center font-bold text-orange-500">{ fmt.Sprint(s.StokTerjual) }</td>
+										<td class="px-4 py-2 text-center font-bold text-green-600">{ fmt.Sprint(s.StokTersisa) }</td>
+									</tr>
+								}
+								if len(data.Stok) == 0 {
+									<tr>
+										<td colspan="4" class="px-4 py-10 text-center text-gray-400">Data stok produk kosong</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<div class="p-3 flex justify-between items-center border-t border-gray-50">
+						<span class="text-[10px] text-gray-500">Hal <span x-text="tabStok"></span> dari <span x-text="totalPageStok()"></span></span>
+						<div class="flex gap-1">
+							<button @click="if(tabStok > 1) tabStok--" 
+									:class="tabStok <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-left"></i></button>
+							<button @click="if(tabStok < totalPageStok()) tabStok++" 
+									:class="tabStok >= totalPageStok() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-right"></i></button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="print-area" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6" x-data="{ currentPeriod: new URLSearchParams(window.location.search).get('period') || 'weekly' }">
+				<div class="flex justify-between items-center mb-6">
+					<h3 class="font-bold text-gray-800">Statistik Penjualan { time.Now().Format("2006") }</h3>
+					<div class="flex items-center gap-3 no-print">
+						<form method="GET" action="/petugas/laporan" class="flex items-center">
+							<select name="period" x-model="currentPeriod" @change="$el.form.submit()" class="text-[10px] font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20">
+								<option value="weekly">Minggu Ini</option>
+								<option value="yearly">Tahun Ini (Jan-Des)</option>
+							</select>
+						</form>
+						<button @click="window.print()" class="text-[10px] font-bold px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition flex items-center gap-2">
+							<i class="fas fa-download"></i> Unduh
+						</button>
+					</div>
+				</div>
+
+				<div class="h-80 bg-brand-orange-soft/30 rounded-xl p-6 relative flex items-end justify-between gap-1 md:gap-3 lg:gap-4 overflow-hidden">
+					if len(data.SalesChart) == 0 {
+						<div class="absolute inset-0 flex items-center justify-center">
+							<p class="text-gray-400 text-sm italic">Belum ada data penjualan</p>
+						</div>
+					} else {
+						for _, s := range data.SalesChart {
+							<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group min-w-0">
+								<span class="text-[9px] font-extrabold text-orange-600 transition-transform group-hover:scale-110">
+									{ fmt.Sprint(s.Count) }
+								</span>
+								<div
+									class="w-full bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-md shadow-md hover:brightness-110 transition-all cursor-pointer relative"
+									style={ fmt.Sprintf("height: %d%%;", s.HeightPercent) }
+								>
+								</div>
+								<span class="text-[9px] text-gray-400 font-bold uppercase truncate w-full text-center">{ s.DayLabel }</span>
+							</div>
+						}
+					}
+				</div>
+
+				<div class="mt-8 border-t border-gray-50 pt-6">
+					<h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+						<i class="fas fa-crown text-yellow-500"></i> 6 Produk Terlaris
+					</h4>
+					<div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+						for i, p := range data.ProdukTop {
+							if i < 6 {
+								<div class="flex items-center gap-4 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+									<div class="w-14 h-14 bg-white rounded-lg shadow-sm border border-gray-100 p-2">
+										<img src={ "/image/" + p.Image } class="w-full h-full object-contain"/>
+									</div>
+									<div class="flex flex-col">
+										<span class="text-xs font-extrabold text-gray-800 leading-tight mb-1">{ p.Name }</span>
+										<span class="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold w-fit">
+											{ fmt.Sprint(p.Sold) } Terjual
+										</span>
+									</div>
+								</div>
+							}
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}

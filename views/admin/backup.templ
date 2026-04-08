@@ -1,0 +1,122 @@
+package admin
+
+import (
+	"e-commerce/views/layouts"
+	"e-commerce/internal/repository"
+)
+
+templ Backup(history []repository.BackupRecord) {
+	@layouts.BaseAdmin("Backup Data", "backup") {
+		<div class="p-8">
+			<h1 class="text-2xl font-bold mb-6 text-gray-800">Backup Data</h1>
+
+			<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+				<h2 class="font-bold text-lg mb-4 text-gray-700">Pilih Data</h2>
+				<form action="/admin/backup/process-sql" method="POST" class="space-y-4">
+					<div class="relative">
+						<select 
+							name="data_type" 
+							required
+							class="w-full p-3 bg-white border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-h-gold/20 cursor-pointer text-gray-700"
+						>
+							<option value="" disabled selected>Pilih data yang ingin di back up</option>
+							<option value="Data User">Data User</option>
+							<option value="Data Produk">Data Produk</option>
+							<option value="Data Transaksi">Data Transaksi</option>
+							<option value="Semua Data (SQL)">Semua Data</option>
+						</select>
+						<div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+							<i class="fas fa-chevron-down text-gray-400"></i>
+						</div>
+					</div>
+					
+					<div class="flex justify-center">
+						<button 
+							type="submit" 
+							class="bg-[#FFFEE4] border border-gray-300 hover:bg-[#fcfcd4] px-8 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-2 text-gray-700"
+						>
+							<i class="fas fa-download text-sm"></i> Backup Sekarang
+						</button>
+					</div>
+				</form>
+			</div>
+
+			<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+				<div class="p-6 border-b border-gray-100 flex justify-between items-center">
+					<h2 class="font-bold text-lg text-gray-700">Riwayat Backup</h2>
+					<span class="text-xs text-gray-400 font-medium uppercase tracking-wider">Log Aktivitas</span>
+				</div>
+				<div class="overflow-x-auto">
+					<table class="w-full text-left">
+						<thead class="bg-[#FFFEE4] text-sm">
+							<tr>
+								<th class="px-6 py-4 font-semibold text-black">Tanggal</th>
+								<th class="px-6 py-4 font-semibold text-black">Jenis Data</th>
+								<th class="px-6 py-4 font-semibold text-black">Status</th>
+								<th class="px-6 py-4 font-semibold text-black text-center">Action</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-100">
+							if len(history) == 0 {
+								<tr>
+									<td colspan="4" class="px-6 py-12 text-center text-gray-400 text-sm italic">
+										<div class="flex flex-col items-center gap-2">
+											<i class="fas fa-history text-2xl mb-2 opacity-20"></i>
+											Belum ada riwayat backup.
+										</div>
+									</td>
+								</tr>
+							} else {
+								for _, h := range history {
+									<tr class="text-sm hover:bg-gray-50 transition">
+										<td class="px-6 py-4 text-gray-600 font-medium">{ h.Date }</td>
+										<td class="px-6 py-4 text-gray-700">
+											<div class="flex items-center gap-2">
+												<i class="fas fa-file-code text-blue-400 text-xs"></i>
+												{ h.DataType }
+											</div>
+										</td>
+										<td class="px-6 py-4">
+											if h.Status == "Success" {
+												<span class="bg-green-100 text-green-600 px-3 py-1 rounded-md text-xs font-bold flex items-center w-fit gap-1">
+													<i class="fas fa-check-circle text-[10px]"></i> { h.Status }
+												</span>
+											} else {
+												<span class="bg-red-100 text-red-600 px-3 py-1 rounded-md text-xs font-bold flex items-center w-fit gap-1">
+													<i class="fas fa-times-circle text-[10px]"></i> { h.Status }
+												</span>
+											}
+										</td>
+										<td class="px-6 py-4 text-center">
+											if h.Status == "Success" {
+												<a 
+													href="/admin/backup/download" 
+													title="Unduh File SQL"
+													class="inline-block text-gray-400 hover:text-black border border-gray-200 hover:border-gray-400 p-1.5 rounded transition shadow-sm bg-white"
+												>
+													<i class="fas fa-download"></i>
+												</a>
+											} else {
+												<span 
+													title="Gagal"
+													class="inline-block text-gray-200 border border-gray-100 p-1.5 rounded cursor-not-allowed"
+												>
+													<i class="fas fa-ban"></i>
+												</span>
+											}
+										</td>
+									</tr>
+								}
+							}
+						</tbody>
+					</table>
+				</div>
+				<div class="p-4 bg-gray-50 border-t border-gray-100">
+					<p class="text-[11px] text-gray-400">
+						* Klik ikon unduh pada kolom Action untuk mengambil file backup (.sql) terbaru yang berhasil diproses.
+					</p>
+				</div>
+			</div>
+		</div>
+	}
+}

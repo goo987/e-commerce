@@ -1,0 +1,59 @@
+package components
+
+templ SidebarPetugas(activeMenu string) {
+    <aside class="w-64 bg-white border-r border-gray-100 flex flex-col fixed h-full z-10">
+        <div class="p-8 flex items-center gap-3">
+            <div class="text-3xl text-yellow-500">
+                <img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-brand-gold font-bold text-xl leading-none tracking-wide">HOSTEL</span>
+                <span class="text-brand-gold text-xs font-medium tracking-widest uppercase">Dashboard</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-6 space-y-3 mt-2">
+            <a href="/petugas/dashboard" class={ "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors", 
+                templ.KV("bg-brand-yellow-light text-gray-800 font-semibold", activeMenu == "dashboard"),
+                templ.KV("text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium", activeMenu != "dashboard") }>
+                <i class="fas fa-chart-line text-lg w-6"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/petugas/produk" class={ "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors", 
+                templ.KV("bg-brand-yellow-light text-gray-800 font-semibold", activeMenu == "produk"),
+                templ.KV("text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium", activeMenu != "produk") }>
+                <i class="fas fa-store text-lg w-6"></i>
+                <span>Produk</span>
+            </a>
+
+            <a href="/petugas/user" class={ "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors", 
+                templ.KV("bg-brand-yellow-light text-gray-800 font-semibold", activeMenu == "user"),
+                templ.KV("text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium", activeMenu != "user") }>
+                <i class="far fa-user text-lg w-6"></i>
+                <span>User</span>
+            </a>
+
+            <a href="/petugas/laporan" class={ "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors", 
+                templ.KV("bg-brand-yellow-light text-gray-800 font-semibold", activeMenu == "laporan"),
+                templ.KV("text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium", activeMenu != "laporan") }>
+                <i class="far fa-file-alt text-lg w-6"></i>
+                <span>Laporan</span>
+            </a>
+
+            <a href="/petugas/pesanan" class={ "flex items-center gap-4 px-4 py-3 rounded-xl transition-colors", 
+                templ.KV("bg-brand-yellow-light text-gray-800 font-semibold", activeMenu == "pesanan"),
+                templ.KV("text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium", activeMenu != "pesanan") }>
+                <i class="far fa-clipboard text-lg w-6"></i>
+                <span>Pesanan</span>
+            </a>
+        </nav>
+
+        <div class="p-6 mt-auto">
+            <a href="/logout" class="flex items-center gap-3 px-6 py-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors font-medium w-full">
+                <i class="fas fa-sign-out-alt rotate-180"></i>
+                <span>Log out</span>
+            </a>
+        </div>
+    </aside>
+}

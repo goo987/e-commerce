@@ -1,0 +1,67 @@
+package layouts
+
+import "e-commerce/views/components"
+
+templ BaseAdmin(title string, activeMenu string) {
+    <!DOCTYPE html>
+    <html lang="id">
+        <head>
+            <meta charset="UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>{ title } - Hostel Mart</title>
+            
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+            
+            <script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            fontFamily: {
+                                sans: ['Poppins', 'sans-serif'],
+                            },
+                            colors: {
+                                'brand-gold': '#D4AF37',
+                                'brand-cream': '#FFFEF9',
+                                'brand-orange-soft': '#FFF1E0',
+                                'brand-yellow': '#FACC15',
+                                'brand-yellow-light': '#FEF9C3',
+                                'bg-main': '#FFFCF5', 
+                            }
+                        }
+                    }
+                }
+            </script>
+            
+            <style>
+                body { background-color: #FFFCF5; font-family: 'Poppins', sans-serif; }
+                .custom-shadow { box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.03); }
+                ::-webkit-scrollbar { width: 6px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+            </style>
+        </head>
+        <body class="text-gray-800">
+            <div class="flex min-h-screen">
+                @components.Sidebar(activeMenu)
+
+                <main class="flex-1 flex flex-col ml-64">
+                    <header class="h-20 bg-white/50 backdrop-blur-sm sticky top-0 z-20 flex items-center justify-end px-10 gap-4">
+                        <div class="text-right">
+                            <span class="block font-bold text-gray-800 text-lg leading-tight">Halo, Admin</span>
+                        </div>
+                        <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
+                            AD
+                        </div>
+                    </header>
+
+                    <div class="p-10 space-y-8">
+                        { children... }
+                    </div>
+                </main>
+            </div>
+        </body>
+    </html>
+}

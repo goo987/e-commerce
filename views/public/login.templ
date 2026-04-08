@@ -1,0 +1,113 @@
+package public
+
+templ Login(errMsg string, successMsg string) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Hostel Mart - Login</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet"/>
+			<script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            fontFamily: {
+                                sans: ['Poppins', 'sans-serif'],
+                            },
+                            colors: {
+                                cream: {
+                                    main: '#FFFEE4',
+                                    card: '#FEF9C3',
+                                },
+                                brand: {
+                                    yellow: '#FACC15',
+                                    orange: '#F06611',
+                                    blue: '#0F5594',
+                                    gold: '#AD861C',
+                                }
+                            }
+                        }
+                    }
+                }
+            </script>
+		</head>
+		<body class="bg-cream-main min-h-screen flex flex-col items-center py-6 md:py-10">
+			<h1 class="text-brand-gold font-bold text-3xl md:text-[40px] mb-12 uppercase tracking-[0.1em] text-center">
+				HOSTEL MART
+			</h1>
+			<div class="w-full max-w-6xl px-4 flex flex-col-reverse md:flex-row items-center justify-center gap-12 md:gap-24">
+				<div class="bg-cream-card/80 border border-black/20 rounded-[50px] shadow-[10px_10px_20px_rgba(0,0,0,0.15)] p-10 md:p-14 w-full max-w-[480px] backdrop-blur-sm relative">
+					<h2 class="text-[32px] font-bold text-black text-center mb-1">
+						Login
+					</h2>
+					<p class="text-center text-sm font-medium text-gray-800 mb-8">
+						Belum punya akun Hostel Mart? 
+						<a href="/" class="text-brand-gold hover:underline font-medium decoration-brand-gold/50 underline-offset-4">Daftar disini</a>
+					</p>
+					<form action="/login" method="POST" class="space-y-5">
+						if errMsg != "" {
+							<div class="p-3 bg-red-500/20 border border-red-500/50 text-red-700 text-xs font-semibold rounded-lg backdrop-blur-md flex items-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+								</svg>
+								{ errMsg }
+							</div>
+						}
+						if successMsg != "" {
+							<div class="p-3 bg-green-500/20 border border-green-500/50 text-green-700 text-xs font-semibold rounded-lg backdrop-blur-md flex items-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+								</svg>
+								{ successMsg }
+							</div>
+						}
+						<div>
+							<input
+								type="text"
+								name="username"
+								required
+								placeholder="Masukkan username anda"
+								class="w-full bg-cream-main/50 text-gray-800 border border-black/20 rounded-2xl px-5 py-4 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow transition placeholder-gray-500 font-medium"
+							/>
+						</div>
+						<div>
+							<input
+								type="password"
+								name="password"
+								required
+								placeholder="Masukkan password anda"
+								class="w-full bg-cream-main/50 text-gray-800 border border-black/20 rounded-2xl px-5 py-4 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow transition placeholder-gray-500 font-medium"
+							/>
+						</div>
+						<div class="pt-4">
+							<button type="submit" class="w-full bg-brand-yellow hover:bg-yellow-400 text-black font-bold text-xl py-4 rounded-2xl shadow-lg transition duration-300 transform active:scale-[0.98]">
+								Login
+							</button>
+						</div>
+						<div class="pt-6 text-center">
+							<p class="text-xs md:text-sm text-gray-600 font-medium">
+								Jika ada kendala, silakan hubungi kami di:
+								<a href="mailto:HostelMart@gmail.com" class="block mt-1 text-brand-blue hover:text-brand-orange transition-colors font-semibold">
+									HostelMart@gmail.com
+								</a>
+							</p>
+						</div>
+					</form>
+				</div>
+				<div class="flex flex-col items-center text-center max-w-sm">
+					<img src="/image/logo.png" alt="Hostel Mart Logo" class="w-72 md:w-[340px] object-contain mb-6"/>
+					<div class="space-y-1">
+						<p class="text-brand-orange font-bold italic text-xl md:text-2xl leading-tight">
+							Belanja mudah, Semua punya cerita.
+						</p>
+						<p class="text-brand-blue italic text-sm md:text-lg font-medium">
+							Gabung sekarang, mulai ceritamu bersama Hostel Mart.
+						</p>
+					</div>
+				</div>
+			</div>
+		</body>
+	</html>
+}

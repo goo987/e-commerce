@@ -1,0 +1,386 @@
+package public
+
+import (
+	"e-commerce/internal/repository"
+	"fmt"
+	"strconv"
+	"time"
+)
+
+func calculateEstimation(orderDateStr string) string {
+	formats := []string{"02 Jan 2006", "2006-01-02", "02-01-2006"}
+	var t time.Time
+	var err error
+	for _, format := range formats {
+		t, err = time.Parse(format, orderDateStr)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		t = time.Now()
+	}
+	est := t.AddDate(0, 0, 2)
+	if time.Now().After(est) {
+		est = time.Now().AddDate(0, 0, 2)
+	}
+	return est.Format("02 Jan 2006")
+}
+
+templ Detail(order repository.Order) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Detail Pesanan - { order.OrderID } - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+			<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+			<script>
+				tailwind.config = {
+					theme: {
+						extend: {
+							colors: {
+								'h-cream': '#FFFEE4',
+								'h-gold': '#AD861C',
+								'h-yellow-soft': '#FFF9A6',
+								'h-footer-bottom': '#FFD18C',
+							},
+							fontFamily: {
+								'poppins': ['Poppins', 'sans-serif'],
+								'inter': ['Inter', 'sans-serif'],
+							}
+						}
+					}
+				}
+			</script>
+		</head>
+		<body class="bg-white font-inter flex flex-col min-h-screen" x-data="{ uploading: false, message: '', showCancelModal: false }">
+			<template x-if="showCancelModal">
+				<div class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+					<div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+						<div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="showCancelModal = false"></div>
+						<span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+						<div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200">
+							<form action="/order/cancel" method="POST">
+								<div class="bg-white px-6 pt-6 pb-4">
+									<div class="sm:flex sm:items-start">
+										<div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+											<i class="fas fa-exclamation-triangle text-red-600"></i>
+										</div>
+										<div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+											<h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">Konfirmasi Pembatalan</h3>
+											<div class="mt-2">
+												<p class="text-sm text-gray-500 font-medium mb-4">
+													Apakah Anda yakin ingin membatalkan pesanan <span class="font-bold text-black">{ order.OrderID }</span>?
+												</p>
+												if order.Status == "Diproses" {
+													<div class="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
+														<p class="text-xs text-blue-700 font-bold uppercase tracking-wider">Data Pengembalian Dana (Refund)</p>
+														<div>
+															<label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Nama Bank</label>
+															<input type="text" name="refund_bank" placeholder="Contoh: BCA / Mandiri / BRI" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-h-gold outline-none"/>
+														</div>
+														<div>
+															<label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Nomor Rekening</label>
+															<input type="text" name="refund_account" placeholder="Masukkan nomor rekening" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-h-gold outline-none"/>
+														</div>
+														<div>
+															<label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Nama Pemilik Rekening</label>
+															<input type="text" name="refund_name" placeholder="Nama sesuai buku tabungan" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-h-gold outline-none"/>
+														</div>
+													</div>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="bg-gray-50 px-6 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+									<input type="hidden" name="order_id" value={ order.OrderID }/>
+									<button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-5 py-2.5 bg-red-600 text-base font-bold text-white hover:bg-red-700 focus:outline-none sm:w-auto sm:text-sm">
+										Ya, Batalkan
+									</button>
+									<button type="button" @click="showCancelModal = false" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-5 py-2.5 bg-white text-base font-bold text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+										Kembali
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</template>
+			<header class="bg-h-cream py-4 px-6 border-b border-gray-200">
+				<div class="max-w-7xl mx-auto flex items-center justify-between">
+					<div class="flex items-center gap-2">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-poppins font-bold text-xl tracking-tight">
+							HOSTEL MART
+						</span>
+					</div>
+				</div>
+			</header>
+			<main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full">
+				<div class="mb-8">
+					<a href="/riwayat" class="inline-flex items-center gap-2 bg-[#FFF9A6] border border-gray-200 rounded-lg px-5 py-2 text-black hover:bg-yellow-200 transition shadow-md font-semibold text-sm">
+						<i class="fas fa-arrow-left text-[10px]"></i> kembali ke riwayat pesanan
+					</a>
+				</div>
+				<div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<h1 class="text-2xl font-bold text-black font-inter">Detail Pesanan</h1>
+					if order.Status == "Diproses" || order.Status == "Menunggu Pembayaran" {
+						<button @click="showCancelModal = true" class="bg-red-50 text-red-600 border border-red-200 px-6 py-2 rounded-lg font-bold text-sm hover:bg-red-100 transition flex items-center gap-2">
+							<i class="fas fa-times-circle"></i> Batalkan Pesanan
+						</button>
+					}
+				</div>
+				<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+					<div class="lg:col-span-8 space-y-6">
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
+							<div class="flex items-center justify-between p-4 border-b border-gray-300 bg-white">
+								<div class="flex items-center gap-4">
+									<span class="text-xl font-bold text-black">#{ order.OrderID }</span>
+									<div class="flex flex-col text-[11px] text-gray-500 font-medium">
+										<span>Tanggal pesanan : { order.Date }</span>
+										<span>
+											if order.Status == "Selesai" {
+												Tiba pada tujuan : { time.Now().Format("02 Jan 2006 15:04") }
+											} else if order.Status != "Dibatalkan" && order.Status != "Pengajuan Pembatalan" {
+												Estimasi : { calculateEstimation(order.Date) }
+											}
+										</span>
+									</div>
+								</div>
+								<div>
+									switch order.Status {
+										case "Diproses":
+											<span class="bg-[#FFF9A6] text-[#695D00] border border-yellow-400 px-4 py-1 rounded-lg text-xs font-bold uppercase">Diproses</span>
+										case "Dikirim":
+											<span class="bg-blue-100 text-blue-700 border border-blue-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">Dikirim</span>
+										case "Selesai":
+											<span class="bg-green-100 text-green-700 border border-green-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">Selesai</span>
+										case "Pengajuan Pembatalan":
+											<span class="bg-red-50 text-red-600 border border-red-200 px-4 py-1 rounded-lg text-xs font-bold uppercase">Pengajuan Pembatalan</span>
+										case "Dibatalkan":
+											<span class="bg-red-100 text-red-700 border border-red-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">Dibatalkan</span>
+										case "Menunggu Pembayaran":
+											<span class="bg-orange-50 text-orange-600 border border-orange-200 px-4 py-1 rounded-lg text-xs font-bold uppercase">Menunggu Pembayaran</span>
+										default:
+											<span class="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-1 rounded-lg text-xs font-bold uppercase">{ order.Status }</span>
+									}
+								</div>
+							</div>
+							<div class="divide-y divide-gray-200">
+								for _, item := range order.Items {
+									<div class="flex items-center justify-between p-5 bg-white">
+										<div class="flex items-center gap-5">
+											<div class="w-20 h-20 border border-gray-100 rounded-lg overflow-hidden bg-gray-50">
+												if item.Image != "" {
+													<img src={ "/image/" + item.Image } class="w-full h-full object-cover" alt={ item.ProductName }/>
+												} else {
+													<div class="w-full h-full flex items-center justify-center">
+														<i class="fa-solid fa-image text-gray-300 text-2xl"></i>
+													</div>
+												}
+											</div>
+											<div>
+												<h3 class="font-bold text-black text-sm mb-1">{ item.ProductName }</h3>
+												<p class="text-gray-400 font-medium text-xs">
+													Rp. { fmt.Sprintf("%d", item.Price) } x { fmt.Sprintf("%d", item.Quantity) }
+												</p>
+											</div>
+										</div>
+										<span class="font-bold text-black text-sm">Rp. { fmt.Sprintf("%d", item.Price * item.Quantity) }</span>
+									</div>
+								}
+							</div>
+							<div class="flex justify-end items-center p-4 bg-gray-50 border-t border-gray-300 gap-4">
+								<span class="text-sm font-bold text-black uppercase">Subtotal Produk :</span>
+								<span class="text-sm font-bold text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+							</div>
+						</div>
+						if order.Status == "Selesai" {
+							for _, item := range order.Items {
+								<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm p-6 mb-4">
+									<h3 class="font-bold text-black mb-4 flex items-center justify-between gap-2">
+										<span class="flex items-center gap-2">
+											<i class="fas fa-star text-h-gold"></i> Berikan Ulasan: <span class="text-h-gold">{ item.ProductName }</span>
+										</span>
+										if item.IsReviewed {
+											<span class="bg-green-50 text-green-600 text-[10px] px-2 py-1 rounded border border-green-200 uppercase tracking-widest">Selesai Diulas</span>
+										}
+									</h3>
+									if !item.IsReviewed {
+										<form action="/review/create" method="POST" class="space-y-4">
+											<input type="hidden" name="product_id" value={ strconv.Itoa(item.ProductID) }/>
+											<input type="hidden" name="order_id" value={ order.OrderID }/>
+											<div x-data="{ localRating: 0, localHover: 0 }">
+												<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Rating Produk</label>
+												<div class="flex gap-2">
+													<input type="hidden" name="rating" :value="localRating" required/>
+													for i := 1; i <= 5; i++ {
+														<button
+															type="button"
+															@click={ fmt.Sprintf("localRating = %d", i) }
+															@mouseenter={ fmt.Sprintf("localHover = %d", i) }
+															@mouseleave="localHover = 0"
+															class="text-2xl transition-colors duration-200 focus:outline-none"
+															:class={ fmt.Sprintf("(localHover || localRating) >= %d ? 'text-yellow-400' : 'text-gray-300'", i) }
+														>
+															<i class="fas fa-star"></i>
+														</button>
+													}
+												</div>
+											</div>
+											<div>
+												<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Komentar</label>
+												<textarea
+													name="comment"
+													rows="2"
+													required
+													placeholder={ "Bagaimana kualitas " + item.ProductName + "?" }
+													class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-h-gold outline-none"
+												></textarea>
+											</div>
+											<button type="submit" class="bg-black text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-gray-800 transition">
+												Kirim Ulasan
+											</button>
+										</form>
+									} else {
+										<div class="bg-gray-50 rounded-lg p-4 text-center border border-dashed border-gray-300">
+											<p class="text-sm text-gray-500 italic">Terima kasih! Anda sudah memberikan ulasan untuk produk ini.</p>
+										</div>
+									}
+								</div>
+							}
+						}
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-300">
+							<div class="p-5">
+								<h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Alamat Pengiriman</h4>
+								<div class="space-y-1">
+									<p class="font-bold text-black text-sm">{ order.BuyerName }</p>
+									<p class="text-xs text-gray-600 leading-relaxed">{ order.Address }</p>
+									<p class="text-xs text-gray-600">Email: { order.Email }</p>
+									<p class="text-xs text-gray-600">No. HP: { order.Phone }</p>
+								</div>
+							</div>
+							<div class="p-5">
+								<h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Metode Pembayaran</h4>
+								<div class="flex items-center gap-3">
+									<div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-black">
+										if order.PaymentMethod == "cod" || order.PaymentMethod == "COD" {
+											<i class="fas fa-hand-holding-dollar text-lg"></i>
+										} else {
+											<i class="fa-solid fa-building-columns text-lg"></i>
+										}
+									</div>
+									<span class="font-bold text-black text-sm uppercase">{ order.PaymentMethod }</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="lg:col-span-4 space-y-6">
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
+							<div class="p-4 border-b border-gray-300">
+								<h4 class="text-sm font-bold text-black uppercase">Ringkasan Pembayaran</h4>
+							</div>
+							<div class="p-5 space-y-4">
+								<div class="flex justify-between text-sm font-medium text-gray-600">
+									<span>Harga produk</span>
+									<span class="text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+								</div>
+								<div class="flex justify-between text-sm font-medium text-gray-600">
+									<span>Ongkos Kirim</span>
+									<span class="text-black">Rp. { fmt.Sprintf("%d", order.ShippingCost) }</span>
+								</div>
+								<div class="pt-4 border-t border-dashed border-gray-300 flex justify-between items-center">
+									<span class="text-sm font-bold text-black uppercase">Total Pesanan</span>
+									<span class="text-lg font-bold text-black">Rp. { fmt.Sprintf("%d", order.Total) }</span>
+								</div>
+							</div>
+						</div>
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
+							<div class="p-4 border-b border-gray-300">
+								<h4 class="text-sm font-bold text-black uppercase">Pelacakan</h4>
+							</div>
+							<div class="p-5 space-y-4">
+								<div class="flex justify-between text-sm">
+									<span class="text-gray-500 font-medium">No. Resi</span>
+									<span class="font-bold text-black uppercase">ORD-{ order.OrderID }</span>
+								</div>
+								<div class="flex justify-between text-sm">
+									<span class="text-gray-500 font-medium">Status</span>
+									<span class="italic font-bold text-h-gold">{ order.Status }</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+			<footer class="bg-h-cream pt-10 border-t border-gray-100 font-inter">
+				<div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
+					<div class="md:col-span-4">
+						<div class="flex items-center gap-3 mb-5">
+							<img src="/image/logo.png" alt="Logo" class="h-12 w-auto"/>
+							<span class="text-h-gold font-poppins font-bold text-3xl tracking-tight">
+								HOSTEL MART
+							</span>
+						</div>
+						<p class="text-base text-gray-800 leading-relaxed font-medium mb-8 max-w-sm">
+							Hostel Mart adalah e-commerce yang mendukung produk lokal dengan sistem 
+							belanja yang mudah, simple, dan terpercaya
+						</p>
+						<p class="text-sm font-semibold text-black">
+							© HostelMart 2026. All Rights Reserved.
+						</p>
+					</div>
+					<div class="md:col-span-2">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Layanan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li><a href="/tentang-kami" class="hover:text-h-gold transition">Tentang Kami</a></li>
+							<li><a href="/" class="hover:text-h-gold transition">Produk</a></li>
+							<li><a href="/keranjang" class="hover:text-h-gold transition">Keranjang</a></li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Bantuan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium leading-relaxed">
+							<li><a href="/cara-belanja" class="hover:text-h-gold transition">Cara Belanja</a></li>
+							<li><a href="/metode-pembayaran" class="hover:text-h-gold transition">Metode Pembayaran</a></li>
+							<li><a href="/pengiriman" class="hover:text-h-gold transition">Pengiriman</a></li>
+							<li>
+								<a href="/syarat-ketentuan" class="hover:text-h-gold transition text-base font-medium leading-relaxed">
+									Syarat & Ketentuan dan Kebijakan Privasi
+									<span class="text-h-gold font-bold ml-1 text-lg">>></span>
+								</a>
+							</li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Hubungi Kami</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li class="flex items-center gap-3">
+								<i class="fas fa-envelope text-black"></i>
+								<span>HostelMart@gmail.com</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-phone-alt text-black"></i>
+								<span>0821-3465-7892</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-map-marker-alt text-black"></i>
+								<span>Indonesia</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="bg-h-footer-bottom py-6 border-t border-black/10">
+					<p class="text-base font-semibold text-black text-center">
+						© HostelMart 2026. All Rights Reserved.
+					</p>
+				</div>
+			</footer>
+		</body>
+	</html>
+}

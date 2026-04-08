@@ -1,0 +1,34 @@
+package public
+
+import "e-commerce/views/layouts"
+
+templ MetodePembayaranPage(from string) {
+	@layouts.StaticLayout("Metode Pembayaran", from) {
+		<h1 class="text-3xl md:text-4xl font-bold text-black mb-16">
+			Metode Pembayaran
+		</h1>
+		<div class="max-w-3xl mx-auto space-y-10 text-gray-800 text-sm md:text-lg leading-relaxed text-left">
+			<p>
+				Hosters, demi kemudahan kamu bertransaksi di Hostel Mart, kami telah menyediakan berbagai pilihan metode pembayaran Transaksi Digital.
+			</p>
+			<p>
+				Jika kamu sudah melakukan pembayaran, mohon kesediaannya untuk menunggu proses verifikasi maksimal 1x24 jam. 
+				<br class="hidden md:block"/>
+				<span class="font-bold">Catatan:</span> Apabila kamu ingin mengubah metode bayar, silakan checkout ulang dan memilih metode pembayaran yang diinginkan.
+			</p>
+			<p>
+				Hosters, Hostel Mart menyediakan dua pilihan metode pembayaran yang dapat kamu gunakan, di antaranya:
+			</p>
+			<div class="pt-4 space-y-3 font-semibold">
+				<div class="flex items-start">
+					<span class="mr-2">1.</span>
+					<p>Bank</p>
+				</div>
+				<div class="flex items-start">
+					<span class="mr-2">2.</span>
+					<p>COD (Cash On Delivery)</p>
+				</div>
+			</div>
+		</div>
+	}
+}
