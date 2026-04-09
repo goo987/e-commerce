@@ -173,7 +173,7 @@ func (h *PetugasHandler) KonfirmasiPembatalan(w http.ResponseWriter, r *http.Req
 	}
 
 	orderID := r.FormValue("order_id")
-	action := r.FormValue("action") // 'approve' atau 'reject'
+	action := r.FormValue("action")
 
 	if orderID == "" {
 		http.Error(w, "Order ID tidak boleh kosong", http.StatusBadRequest)

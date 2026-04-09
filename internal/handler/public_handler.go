@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"e-commerce/internal/middleware" // Import middleware untuk akses UserIDKey
+	"e-commerce/internal/middleware"
 	"e-commerce/internal/repository"
 	"e-commerce/views/public"
 	"encoding/json"
@@ -463,7 +463,6 @@ func (h *PublicHandler) BatalkanPesanan(w http.ResponseWriter, r *http.Request) 
 
 	if order.Status == "Diproses" {
 		if strings.ToLower(order.PaymentMethod) == "cod" {
-			// COD bisa langsung ajukan pembatalan tanpa form
 			err = h.OrderRepo.AjukanPembatalan(orderID, "", "", "")
 			if err != nil {
 				fmt.Printf("[DEBUG] AjukanPembatalan COD Error: %v\n", err)
@@ -472,7 +471,6 @@ func (h *PublicHandler) BatalkanPesanan(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		// Non-COD tetap wajib isi form
 		if bank == "" || account == "" || name == "" {
 			http.Redirect(w, r, "/riwayat", http.StatusSeeOther)
 			return

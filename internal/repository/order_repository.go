@@ -19,7 +19,7 @@ type OrderItem struct {
 type Order struct {
 	OrderID        string
 	Date           string
-	CompletedAt    string // ✅ Ditambahkan
+	CompletedAt    string 
 	BuyerName      string
 	BuyerProfile   string
 	Total          int
@@ -75,8 +75,6 @@ func isJabodetabek(address string) bool {
 	return false
 }
 
-// ================== SYSTEM TRACKING BARU (HISTORY BASED) ==================
-
 func (r *OrderRepository) AppendTracking(orderID string, newStep string) error {
 	var current string
 
@@ -119,7 +117,6 @@ func (r *OrderRepository) UpdateTrackingStep(orderID string) error {
 	jabodetabek := isJabodetabek(address)
 	steps := []string{}
 
-	// ✅ UPDATE: Menambahkan "Pesanan sedang dibuat" agar sinkron dengan database
 	if jabodetabek {
 		steps = []string{
 			"Pesanan sedang dibuat",
@@ -176,8 +173,6 @@ func (r *OrderRepository) UpdateTrackingStep(orderID string) error {
 
 	return nil
 }
-
-// ===========================================================================
 
 func (r *OrderRepository) CreateOrder(input CreateOrderInput) (string, error) {
 	tx, err := r.DB.Begin()
@@ -326,7 +321,6 @@ func (r *OrderRepository) UpdateOrderStatus(orderID string, status string) error
 		return err
 	}
 
-	// ✅ TAMBAHAN PENTING DI SINI
 	if status == "Dikirim" {
 		var current string
 

@@ -89,8 +89,6 @@ func New(
 		user.Get("/akun", publicH.Akun)
 		user.Post("/akun/update", publicH.UpdateAkun)
 		user.Post("/akun/change-password", publicH.ChangePassword)
-
-		// ✅ FIX DI SINI (SAMAKAN DENGAN FRONTEND)
 		user.Post("/akun/update-photo", publicH.UpdateFotoProfil)
 		user.Post("/akun/delete-photo", publicH.DeleteFotoProfil)
 	})
@@ -146,7 +144,6 @@ func New(
 		p.Get("/produk/delete", petugasH.DeleteProduk)
 	})
 
-	// NOT FOUND
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		views.Notfound().Render(r.Context(), w)
 	})
