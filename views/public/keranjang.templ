@@ -2,13 +2,8 @@ package public
 
 import (
 	"e-commerce/internal/repository"
-	"fmt"
 	"strconv"
 )
-
-func formatRupiah(amount int) string {
-	return fmt.Sprintf("Rp %s", strconv.Itoa(amount))
-}
 
 templ Keranjang(products []repository.Product) {
 	<!DOCTYPE html>
@@ -311,7 +306,7 @@ templ Keranjang(products []repository.Product) {
 											</div>
 										</td>
 										<td class="py-8 px-10 text-right font-bold text-gray-900 text-xl subtotal-val">
-											{ formatRupiah(p.Price * p.CartQty) }
+											{ formatRibuan(p.Price * p.CartQty) }
 										</td>
 									</tr>
 								}

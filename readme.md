@@ -22,8 +22,6 @@ templ generate
 go run cmd/web/main.go
 ```
 ### dan klik 
-```
-Ctrl + C
-```
+`Ctrl + C`
 ### untuk menghentikan server
 #### jika ingin melihat databasenya gunakan extension SQLTools dan SQLTools SQLite

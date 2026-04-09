@@ -144,6 +144,28 @@ func (h *PetugasHandler) UpdateOrderStatus(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, "/petugas/pesanan/detail/"+orderID, http.StatusSeeOther)
 }
 
+func (h *PetugasHandler) UpdateTrackingStep(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method tidak diizinkan", http.StatusMethodNotAllowed)
+		return
+	}
+
+	orderID := r.FormValue("order_id")
+
+	if orderID == "" {
+		http.Error(w, "Order ID tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
+
+	err := h.OrderRepo.UpdateTrackingStep(orderID)
+	if err != nil {
+		http.Error(w, "Gagal update tracking: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/petugas/pesanan/detail/"+orderID, http.StatusSeeOther)
+}
+
 func (h *PetugasHandler) KonfirmasiPembatalan(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method tidak diizinkan", http.StatusMethodNotAllowed)

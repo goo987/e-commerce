@@ -2,13 +2,8 @@ package public
 
 import (
 	"e-commerce/internal/repository"
-	"fmt"
 	"strconv"
 )
-
-func formatHarga(n int) string {
-	return fmt.Sprintf("%d", n)
-}
 
 templ Riwayat(orders []repository.Order, currentStatus string) {
 	<!DOCTYPE html>
@@ -142,7 +137,7 @@ templ Riwayat(orders []repository.Order, currentStatus string) {
 											}
 										}
 										<div class="flex items-center gap-3">
-											<span class="text-sm text-gray-600 font-medium">Total: Rp { formatHarga(o.Total) }</span>
+											<span class="text-sm text-gray-600 font-medium">Total: Rp { formatRibuan(o.Total) }</span>
 											<div class="h-4 w-0.5 bg-gray-300"></div>
 											<span class="text-[11px] text-gray-500 uppercase font-bold">{ o.PaymentMethod }</span>
 										</div>

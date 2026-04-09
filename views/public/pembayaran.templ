@@ -65,10 +65,10 @@ templ Pembayaran(order repository.Order) {
 									</div>
 									<div class="flex flex-col">
 										<span class="text-[13px] font-medium text-gray-700 leading-tight">{ item.ProductName }</span>
-										<span class="text-[11px] text-gray-500">{ strconv.Itoa(item.Quantity) }x</span>
+										<span class="text-[11px] text-gray-500">{ formatRibuan(item.Quantity) }x</span>
 									</div>
 								</div>
-								<span class="text-[13px] font-semibold text-gray-800">Rp. { strconv.Itoa(item.Price * item.Quantity) }</span>
+								<span class="text-[13px] font-semibold text-gray-800">Rp. { formatRibuan(item.Price * item.Quantity) }</span>
 							</div>
 						}
 					</div>
@@ -79,18 +79,18 @@ templ Pembayaran(order repository.Order) {
 								<span>Subtotal Produk</span>
 								<span>:</span>
 							</div>
-							<span class="font-medium">Rp. { strconv.Itoa(order.Total - order.ShippingCost) }</span>
+							<span class="font-medium">Rp. { formatRibuan(order.Total - order.ShippingCost) }</span>
 						</div>
 						<div class="flex justify-between text-gray-700">
 							<div class="flex w-32 justify-between">
 								<span>Ongkos Kirim</span>
 								<span>:</span>
 							</div>
-							<span class="font-medium">Rp. { strconv.Itoa(order.ShippingCost) }</span>
+							<span class="font-medium">Rp. { formatRibuan(order.ShippingCost) }</span>
 						</div>
 						<div class="border-t border-gray-200 pt-3 mt-2 flex justify-between font-bold text-gray-900">
 							<span>Total Bayar:</span>
-							<span>Rp. { strconv.Itoa(order.Total) }</span>
+							<span>Rp. { formatRibuan(order.Total) }</span>
 						</div>
 					</div>
 				</div>

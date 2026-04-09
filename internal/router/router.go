@@ -130,6 +130,9 @@ func New(
 
 		p.Get("/pesanan", petugasH.PetugasPesanan)
 		p.Post("/order/update-status", petugasH.UpdateOrderStatus)
+
+		p.Post("/order/update-tracking-step", petugasH.UpdateTrackingStep)
+
 		p.Get("/pesanan/detail/{id}", petugasH.DetailPesanan)
 		p.Post("/pesanan/selesai/{id}", petugasH.SelesaikanPesanan)
 		p.Post("/pesanan/cancel/{id}", petugasH.KonfirmasiPembatalan)

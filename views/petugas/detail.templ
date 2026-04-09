@@ -3,25 +3,53 @@ package petugas
 import (
 	"e-commerce/internal/repository"
 	"strconv"
+	"strings"
 	"time"
 )
 
 func calculateEstimation(orderDateStr string) string {
-	t, err := time.Parse("02 Jan 2006", orderDateStr)
-	if err != nil {
-		t, err = time.Parse("2006-01-02", orderDateStr)
-		if err != nil {
-			t = time.Now()
+	formats := []string{"02 Jan 2006", "2006-01-02", "02-01-2006"}
+	var t time.Time
+	var err error
+	for _, format := range formats {
+		t, err = time.Parse(format, orderDateStr)
+		if err == nil {
+			break
 		}
 	}
-
+	if err != nil {
+		t = time.Now()
+	}
 	est := t.AddDate(0, 0, 2)
-
 	if time.Now().After(est) {
 		est = time.Now().AddDate(0, 0, 2)
 	}
-
 	return est.Format("02 Jan 2006")
+}
+
+// Helper untuk mengambil step terakhir tracking
+func getLastTracking(detail string) string {
+	parts := strings.Split(detail, "|")
+	if len(parts) == 0 || detail == "" {
+		return ""
+	}
+	return strings.TrimSpace(parts[len(parts)-1])
+}
+
+// Helper untuk memecah tracking jadi list dengan trim space
+func getTrackingList(detail string) []string {
+	if strings.TrimSpace(detail) == "" {
+		return []string{}
+	}
+	raw := strings.Split(detail, "|")
+	var clean []string
+	for _, r := range raw {
+		trimmed := strings.TrimSpace(r)
+		if trimmed != "" {
+			clean = append(clean, trimmed)
+		}
+	}
+	return clean
 }
 
 templ Detail(order repository.Order) {
@@ -55,7 +83,6 @@ templ Detail(order repository.Order) {
             </script>
 		</head>
 		<body class="bg-white font-inter flex flex-col min-h-screen" x-data="{ showImageModal: false }">
-
 			<div
 				x-show="showImageModal"
 				x-transition
@@ -82,7 +109,6 @@ templ Detail(order repository.Order) {
 					</div>
 				</div>
 			</div>
-
 			<header class="bg-h-cream py-4 px-6 border-b border-gray-200">
 				<div class="max-w-7xl mx-auto flex items-center justify-between">
 					<div class="flex items-center gap-2">
@@ -112,14 +138,14 @@ templ Detail(order repository.Order) {
 										<span>Tanggal pesanan : { order.Date }</span>
 										<span>
 											if order.Status == "Selesai" {
-												Tiba pada tujuan : { order.Date }
+												Tiba pada tujuan : { order.CompletedAt }
 											} else {
 												Estimasi : { calculateEstimation(order.Date) }
 											}
 										</span>
 									</div>
 								</div>
-								<div>
+								<div class="text-right">
 									switch order.Status {
 										case "Diproses":
 											<span class="bg-[#FFF9A6] text-[#695D00] border border-yellow-400 px-4 py-1 rounded-lg text-xs font-bold uppercase">Diproses</span>
@@ -138,7 +164,6 @@ templ Detail(order repository.Order) {
 									}
 								</div>
 							</div>
-
 							<div class="divide-y divide-gray-200">
 								for _, item := range order.Items {
 									<div class="flex items-center justify-between p-5 bg-white">
@@ -149,21 +174,49 @@ templ Detail(order repository.Order) {
 											<div>
 												<h3 class="font-bold text-black text-sm mb-1">{ item.ProductName }</h3>
 												<p class="text-gray-400 font-medium text-xs">
-													Rp. { strconv.Itoa(item.Price) } x { strconv.Itoa(item.Quantity) }
+													Rp. { FormatRibuan(item.Price) } x { strconv.Itoa(item.Quantity) }
 												</p>
 											</div>
 										</div>
-										<span class="font-bold text-black text-sm">Rp. { strconv.Itoa(item.Price * item.Quantity) }</span>
+										<span class="font-bold text-black text-sm">Rp. { FormatRibuan(item.Price * item.Quantity) }</span>
 									</div>
 								}
 							</div>
-
 							<div class="flex justify-end items-center p-4 bg-gray-50 border-t border-gray-300 gap-4">
 								<span class="text-sm font-bold text-black uppercase">Subtotal Produk :</span>
-								<span class="text-sm font-bold text-black">Rp. { strconv.Itoa(order.Total - order.ShippingCost) }</span>
+								<span class="text-sm font-bold text-black">Rp. { FormatRibuan(order.Total - order.ShippingCost) }</span>
 							</div>
 						</div>
-
+						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm p-6">
+							<h4 class="text-sm font-bold text-black uppercase mb-6 tracking-wider flex items-center gap-2">
+								<i class="fas fa-map-marker-alt text-h-gold"></i> Riwayat Perjalanan
+							</h4>
+							<div class="space-y-6 relative before:absolute before:inset-0 before:ml-2.5 before:w-0.5 before:-translate-x-px before:bg-gray-200">
+								{{ tracking := getTrackingList(order.TrackingDetail) }}
+								if len(tracking) == 0 {
+									{{ tracking = []string{"Pesanan dibuat"} }}
+								}
+								{{ lastIndex := len(tracking) - 1 }}
+								for i, t := range tracking {
+									<div class="relative flex items-center justify-between">
+										<div class="flex items-center">
+											if i == lastIndex {
+												<div class="absolute left-0 w-5 h-5 rounded-full border-4 border-white shadow-sm bg-blue-500"></div>
+											} else {
+												<div class="absolute left-0 w-5 h-5 rounded-full border-4 border-white shadow-sm bg-gray-300"></div>
+											}
+											<div class="ml-8">
+												if i == lastIndex {
+													<p class="text-sm font-bold text-black">{ t }</p>
+												} else {
+													<p class="text-sm text-gray-500">{ t }</p>
+												}
+											</div>
+										</div>
+									</div>
+								}
+							</div>
+						</div>
 						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-300">
 							<div class="p-5">
 								<h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Alamat Pengiriman</h4>
@@ -174,7 +227,6 @@ templ Detail(order repository.Order) {
 									<p class="text-xs text-blue-500 font-medium italic">{ order.Phone }</p>
 								</div>
 							</div>
-
 							<div class="p-5">
 								<h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Metode Pembayaran</h4>
 								<div class="flex items-center gap-3">
@@ -187,7 +239,6 @@ templ Detail(order repository.Order) {
 									</div>
 									<span class="font-bold text-black text-sm uppercase">{ order.PaymentMethod }</span>
 								</div>
-
 								if order.PaymentMethod != "COD" && order.PaymentMethod != "cod" {
 									<button
 										@click="showImageModal = true"
@@ -200,7 +251,6 @@ templ Detail(order repository.Order) {
 							</div>
 						</div>
 					</div>
-
 					<div class="lg:col-span-4 space-y-6">
 						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
 							<div class="p-4 border-b border-gray-300">
@@ -209,19 +259,18 @@ templ Detail(order repository.Order) {
 							<div class="p-5 space-y-4">
 								<div class="flex justify-between text-sm font-medium text-gray-600">
 									<span>Harga produk</span>
-									<span class="text-black">Rp. { strconv.Itoa(order.Total - order.ShippingCost) }</span>
+									<span class="text-black">Rp. { FormatRibuan(order.Total - order.ShippingCost) }</span>
 								</div>
 								<div class="flex justify-between text-sm font-medium text-gray-600">
 									<span>Ongkos Kirim</span>
-									<span class="text-black">Rp. { strconv.Itoa(order.ShippingCost) }</span>
+									<span class="text-black">Rp. { FormatRibuan(order.ShippingCost) }</span>
 								</div>
 								<div class="pt-4 border-t border-dashed border-gray-300 flex justify-between items-center">
 									<span class="text-sm font-bold text-black uppercase">Total</span>
-									<span class="text-lg font-bold text-black">Rp. { strconv.Itoa(order.Total) }</span>
+									<span class="text-lg font-bold text-black">Rp. { FormatRibuan(order.Total) }</span>
 								</div>
 							</div>
 						</div>
-
 						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm p-5 space-y-4">
 							<h4 class="text-sm font-bold text-black uppercase tracking-wider">Aksi Petugas</h4>
 							<div class="space-y-3">
@@ -263,13 +312,25 @@ templ Detail(order repository.Order) {
 											</button>
 										</form>
 									case "Dikirim":
-										<form method="POST" action="/petugas/order/update-status">
-											<input type="hidden" name="order_id" value={ order.OrderID }/>
-											<input type="hidden" name="status" value="Selesai"/>
-											<button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg text-xs font-bold transition-all shadow-md flex justify-center items-center gap-2">
-												<i class="fas fa-check-circle"></i> Selesaikan Pesanan
-											</button>
-										</form>
+										if !strings.Contains(strings.ToLower(getLastTracking(order.TrackingDetail)), "sampai ke alamat tujuan") {
+											<div class="p-2 space-y-3">
+												<form method="POST" action="/petugas/order/update-tracking-step">
+													<input type="hidden" name="order_id" value={ order.OrderID }/>
+													<input type="hidden" name="step" value="Barang sampai ke alamat tujuan"/>
+													<button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2">
+														<i class="fas fa-truck-ramp-box"></i> Update Tracking Pesanan
+													</button>
+												</form>
+											</div>
+										} else {
+											<div class="text-center py-4 bg-green-50 rounded-lg border border-green-200">
+												<p class="text-xs font-bold text-green-600">Pesanan sudah sampai tujuan ✅</p>
+											</div>
+										}
+									case "Selesai":
+										<div class="text-center py-4 bg-green-50 rounded-lg border border-green-200">
+											<p class="text-xs font-bold text-green-600">Pesanan Selesai ✔</p>
+										</div>
 									default:
 										<div class="text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
 											<p class="text-xs font-bold text-gray-400 italic">Tidak ada aksi untuk status ini</p>

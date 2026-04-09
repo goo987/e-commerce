@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -16,35 +17,37 @@ type OrderItem struct {
 }
 
 type Order struct {
-	OrderID       string
-	Date          string
-	BuyerName     string
-	BuyerProfile  string
-	Total         int
-	Status        string
-	ShippingCost  int
-	PaymentMethod string
-	PaymentProof  string
-	Email         string
-	Phone         string
-	Address       string
-	Items         []OrderItem
-	RefundBank    string
-	RefundAccount string
-	RefundName    string
+	OrderID        string
+	Date           string
+	CompletedAt    string // ✅ Ditambahkan
+	BuyerName      string
+	BuyerProfile   string
+	Total          int
+	Status         string
+	ShippingCost   int
+	PaymentMethod  string
+	PaymentProof   string
+	Email          string
+	Phone          string
+	Address        string
+	Items          []OrderItem
+	RefundBank     string
+	RefundAccount  string
+	RefundName     string
+	TrackingDetail string
 }
 
 type CreateOrderInput struct {
-	UserID        int
-	BuyerName     string
-	Address       string
-	Phone         string
-	Email         string
-	PaymentMethod string
-	TotalPrice    int
-	ShippingCost  int
-	Status        string
-	Items         []OrderItemInput
+	UserID         int
+	BuyerName      string
+	Address        string
+	Phone          string
+	Email          string
+	PaymentMethod  string
+	TotalPrice     int
+	ShippingCost   int
+	Status         string
+	Items          []OrderItemInput
 }
 
 type OrderItemInput struct {
@@ -61,6 +64,121 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 	return &OrderRepository{DB: db}
 }
 
+func isJabodetabek(address string) bool {
+	addr := strings.ToLower(address)
+	keywords := []string{"jakarta", "bogor", "depok", "tangerang", "bekasi"}
+	for _, k := range keywords {
+		if strings.Contains(addr, k) {
+			return true
+		}
+	}
+	return false
+}
+
+// ================== SYSTEM TRACKING BARU (HISTORY BASED) ==================
+
+func (r *OrderRepository) AppendTracking(orderID string, newStep string) error {
+	var current string
+
+	err := r.DB.QueryRow(
+		"SELECT tracking_detail FROM orders WHERE order_id = ?",
+		orderID,
+	).Scan(&current)
+
+	if err != nil {
+		return err
+	}
+
+	if current == "" {
+		current = newStep
+	} else {
+		current = current + " | " + newStep
+	}
+
+	_, err = r.DB.Exec(
+		"UPDATE orders SET tracking_detail = ? WHERE order_id = ?",
+		current, orderID,
+	)
+
+	return err
+}
+
+func (r *OrderRepository) UpdateTrackingStep(orderID string) error {
+	var address string
+	var current string
+
+	err := r.DB.QueryRow(
+		"SELECT address, tracking_detail FROM orders WHERE order_id = ?",
+		orderID,
+	).Scan(&address, &current)
+
+	if err != nil {
+		return err
+	}
+
+	jabodetabek := isJabodetabek(address)
+	steps := []string{}
+
+	// ✅ UPDATE: Menambahkan "Pesanan sedang dibuat" agar sinkron dengan database
+	if jabodetabek {
+		steps = []string{
+			"Pesanan sedang dibuat",
+			"Pesanan telah diserahkan ke jasa kirim",
+			"Pesanan telah sampai di DC kota tujuan",
+			"Pesanan sedang diantar ke alamat tujuan",
+			"Pesanan telah sampai ke alamat tujuan",
+		}
+	} else {
+		steps = []string{
+			"Pesanan sedang dibuat",
+			"Pesanan telah diserahkan ke jasa kirim",
+			"Pesanan telah sampai di DC provinsi",
+			"Pesanan telah sampai di DC kota",
+			"Pesanan sedang diantar ke alamat tujuan",
+			"Pesanan telah sampai ke alamat tujuan",
+		}
+	}
+
+	var currentSteps []string
+	if strings.TrimSpace(current) == "" {
+		currentSteps = []string{}
+	} else {
+		currentSteps = strings.Split(current, " | ")
+	}
+
+	if len(currentSteps) >= len(steps) {
+		return nil
+	}
+
+	lastStep := ""
+	if len(currentSteps) > 0 {
+		lastStep = currentSteps[len(currentSteps)-1]
+	}
+
+	if strings.Contains(strings.ToLower(lastStep), "sampai ke alamat") {
+		return nil
+	}
+
+	nextStep := steps[len(currentSteps)]
+
+	err = r.AppendTracking(orderID, nextStep)
+	if err != nil {
+		return err
+	}
+
+	if nextStep == "Pesanan telah sampai ke alamat tujuan" {
+		_, _ = r.DB.Exec(`
+            UPDATE orders 
+            SET status = 'Selesai', completed_at = CURRENT_TIMESTAMP 
+            WHERE order_id = ?
+        `, orderID)
+	}
+
+	return nil
+}
+
+// ===========================================================================
+
 func (r *OrderRepository) CreateOrder(input CreateOrderInput) (string, error) {
 	tx, err := r.DB.Begin()
 	if err != nil {
@@ -68,12 +186,13 @@ func (r *OrderRepository) CreateOrder(input CreateOrderInput) (string, error) {
 	}
 
 	orderID := fmt.Sprintf("HM-%d", time.Now().UnixNano()/1e6)
+	trackingInfo := "Pesanan sedang dibuat"
 
 	queryOrder := `
-		INSERT INTO orders (
-			order_id, user_id, buyer_name, address, phone, email,
-			total_price, shipping_cost, payment_method, status, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        INSERT INTO orders (
+            order_id, user_id, buyer_name, address, phone, email,
+            total_price, shipping_cost, payment_method, status, created_at, tracking_detail
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`
 
 	_, err = tx.Exec(queryOrder,
 		orderID,
@@ -86,6 +205,7 @@ func (r *OrderRepository) CreateOrder(input CreateOrderInput) (string, error) {
 		input.ShippingCost,
 		input.PaymentMethod,
 		input.Status,
+		trackingInfo,
 	)
 
 	if err != nil {
@@ -118,15 +238,15 @@ func (r *OrderRepository) CreateOrder(input CreateOrderInput) (string, error) {
 
 func (r *OrderRepository) GetAllOrders() ([]Order, error) {
 	query := `
-		SELECT 
-			o.order_id, o.created_at, o.total_price, o.shipping_cost, o.status, 
-			o.buyer_name, o.address, o.payment_method, COALESCE(o.payment_proof, ''),
-			COALESCE(o.email, ''), COALESCE(o.phone, ''),
-			COALESCE(o.refund_bank, ''), COALESCE(o.refund_account, ''), COALESCE(o.refund_name, ''),
-			COALESCE(u.profile_picture, '')
-		FROM orders o
-		LEFT JOIN users u ON o.user_id = u.id
-		ORDER BY o.created_at DESC`
+        SELECT 
+            o.order_id, o.created_at, COALESCE(o.completed_at, ''), o.total_price, o.shipping_cost, o.status, 
+            o.buyer_name, o.address, o.payment_method, COALESCE(o.payment_proof, ''),
+            COALESCE(o.email, ''), COALESCE(o.phone, ''),
+            COALESCE(o.refund_bank, ''), COALESCE(o.refund_account, ''), COALESCE(o.refund_name, ''),
+            COALESCE(u.profile_picture, ''), COALESCE(o.tracking_detail, '')
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC`
 
 	rows, err := r.DB.Query(query)
 	if err != nil {
@@ -137,16 +257,21 @@ func (r *OrderRepository) GetAllOrders() ([]Order, error) {
 	var orders []Order
 	for rows.Next() {
 		var o Order
-		var rawTime string
+		var rawTime, rawCompleted string
 		err := rows.Scan(
-			&o.OrderID, &rawTime, &o.Total, &o.ShippingCost, &o.Status,
+			&o.OrderID, &rawTime, &rawCompleted, &o.Total, &o.ShippingCost, &o.Status,
 			&o.BuyerName, &o.Address, &o.PaymentMethod, &o.PaymentProof,
 			&o.Email, &o.Phone,
 			&o.RefundBank, &o.RefundAccount, &o.RefundName,
-			&o.BuyerProfile,
+			&o.BuyerProfile, &o.TrackingDetail,
 		)
 		if err == nil {
 			o.Date = parseOrderDate(rawTime)
+			if rawCompleted != "" {
+				o.CompletedAt = parseOrderDate(rawCompleted)
+			} else {
+				o.CompletedAt = "-"
+			}
 			items, _ := r.getOrderItems(o.OrderID)
 			o.Items = items
 			orders = append(orders, o)
@@ -157,29 +282,34 @@ func (r *OrderRepository) GetAllOrders() ([]Order, error) {
 
 func (r *OrderRepository) GetOrderByID(orderID string) (Order, error) {
 	var o Order
-	var rawTime string
+	var rawTime, rawCompleted string
 
 	queryOrder := `
-		SELECT 
-			o.order_id, o.created_at, o.total_price, o.shipping_cost, o.status, 
-			o.payment_method, COALESCE(o.payment_proof, ''), COALESCE(o.buyer_name, ''), 
-			COALESCE(o.address, ''), COALESCE(o.email, ''),  COALESCE(o.phone, ''),
-			COALESCE(o.refund_bank, ''), COALESCE(o.refund_account, ''), COALESCE(o.refund_name, ''),
-			COALESCE(u.profile_picture, '')
-		FROM orders o
-		LEFT JOIN users u ON o.user_id = u.id
-		WHERE o.order_id = ?`
+        SELECT 
+            o.order_id, o.created_at, COALESCE(o.completed_at, ''), o.total_price, o.shipping_cost, o.status, 
+            o.payment_method, COALESCE(o.payment_proof, ''), COALESCE(o.buyer_name, ''), 
+            COALESCE(o.address, ''), COALESCE(o.email, ''),  COALESCE(o.phone, ''),
+            COALESCE(o.refund_bank, ''), COALESCE(o.refund_account, ''), COALESCE(o.refund_name, ''),
+            COALESCE(u.profile_picture, ''), COALESCE(o.tracking_detail, '')
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        WHERE o.order_id = ?`
 
 	err := r.DB.QueryRow(queryOrder, orderID).Scan(
-		&o.OrderID, &rawTime, &o.Total, &o.ShippingCost, &o.Status,
+		&o.OrderID, &rawTime, &rawCompleted, &o.Total, &o.ShippingCost, &o.Status,
 		&o.PaymentMethod, &o.PaymentProof, &o.BuyerName, &o.Address, &o.Email, &o.Phone,
 		&o.RefundBank, &o.RefundAccount, &o.RefundName,
-		&o.BuyerProfile,
+		&o.BuyerProfile, &o.TrackingDetail,
 	)
 	if err != nil {
 		return o, err
 	}
 	o.Date = parseOrderDate(rawTime)
+	if rawCompleted != "" {
+		o.CompletedAt = parseOrderDate(rawCompleted)
+	} else {
+		o.CompletedAt = "-"
+	}
 
 	items, _ := r.getOrderItems(o.OrderID)
 	o.Items = items
@@ -188,8 +318,43 @@ func (r *OrderRepository) GetOrderByID(orderID string) (Order, error) {
 }
 
 func (r *OrderRepository) UpdateOrderStatus(orderID string, status string) error {
-	query := `UPDATE orders SET status = ? WHERE order_id = ?`
-	_, err := r.DB.Exec(query, status, orderID)
+	_, err := r.DB.Exec(
+		`UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE order_id = ?`,
+		status, orderID,
+	)
+	if err != nil {
+		return err
+	}
+
+	// ✅ TAMBAHAN PENTING DI SINI
+	if status == "Dikirim" {
+		var current string
+
+		err := r.DB.QueryRow(
+			"SELECT tracking_detail FROM orders WHERE order_id = ?",
+			orderID,
+		).Scan(&current)
+
+		if err == nil {
+			if !strings.Contains(strings.ToLower(current), "diserahkan ke jasa kirim") {
+				_ = r.AppendTracking(orderID, "Pesanan telah diserahkan ke jasa kirim")
+			}
+		}
+	}
+
+	if status == "Selesai" {
+		_, _ = r.DB.Exec(
+			`UPDATE orders SET completed_at = CURRENT_TIMESTAMP WHERE order_id = ?`,
+			orderID,
+		)
+	}
+
+	return nil
+}
+
+func (r *OrderRepository) UpdateTrackingDetail(orderID string, detail string) error {
+	query := `UPDATE orders SET tracking_detail = ? WHERE order_id = ?`
+	_, err := r.DB.Exec(query, detail, orderID)
 	return err
 }
 
@@ -201,12 +366,12 @@ func (r *OrderRepository) UpdatePaymentStatus(orderID string, fileName string, e
 
 func (r *OrderRepository) AjukanPembatalan(orderID string, bank, account, name string) error {
 	query := `
-		UPDATE orders 
-		SET status = 'Pengajuan Pembatalan', 
-			refund_bank = ?, 
-			refund_account = ?, 
-			refund_name = ? 
-		WHERE order_id = ?`
+        UPDATE orders 
+        SET status = 'Pengajuan Pembatalan', 
+            refund_bank = ?, 
+            refund_account = ?, 
+            refund_name = ? 
+        WHERE order_id = ?`
 	_, err := r.DB.Exec(query, bank, account, name, orderID)
 	return err
 }
@@ -224,10 +389,10 @@ func (r *OrderRepository) BatalkanPesanan(orderID string) error {
 
 	for _, item := range items {
 		updateStockQuery := `
-			UPDATE products 
-			SET stock = stock + ?, 
-				sold = sold - ? 
-			WHERE id = ?`
+            UPDATE products 
+            SET stock = stock + ?, 
+                sold = sold - ? 
+            WHERE id = ?`
 		if _, err := tx.Exec(updateStockQuery, item.Quantity, item.Quantity, item.ProductID); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("gagal mengembalikan stok produk ID %d: %v", item.ProductID, err)
@@ -245,16 +410,16 @@ func (r *OrderRepository) BatalkanPesanan(orderID string) error {
 
 func (r *OrderRepository) getOrderItems(orderID string) ([]OrderItem, error) {
 	query := `
-		SELECT 
+        SELECT 
             oi.product_id, 
             p.name, 
             COALESCE(p.image, ''), 
             oi.quantity, 
             oi.price_at_purchase,
             oi.is_reviewed
-		FROM order_items oi
-		JOIN products p ON oi.product_id = p.id
-		WHERE oi.order_id = ?`
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?`
 
 	rows, err := r.DB.Query(query, orderID)
 	if err != nil {
@@ -280,15 +445,15 @@ func (r *OrderRepository) MarkItemAsReviewed(orderID string, productID int) erro
 
 func (r *OrderRepository) GetUserOrdersByStatus(userID int, status string) ([]Order, error) {
 	query := `
-		SELECT 
-			o.order_id, o.created_at, o.total_price, o.shipping_cost, o.status, 
-			o.buyer_name, o.address, o.payment_method, COALESCE(o.payment_proof, ''),
-			COALESCE(o.email, ''), COALESCE(o.phone, ''),
-			COALESCE(o.refund_bank, ''), COALESCE(o.refund_account, ''), COALESCE(o.refund_name, ''),
-			COALESCE(u.profile_picture, '')
-		FROM orders o
-		LEFT JOIN users u ON o.user_id = u.id
-		WHERE o.user_id = ?`
+        SELECT 
+            o.order_id, o.created_at, COALESCE(o.completed_at, ''), o.total_price, o.shipping_cost, o.status, 
+            o.buyer_name, o.address, o.payment_method, COALESCE(o.payment_proof, ''),
+            COALESCE(o.email, ''), COALESCE(o.phone, ''),
+            COALESCE(o.refund_bank, ''), COALESCE(o.refund_account, ''), COALESCE(o.refund_name, ''),
+            COALESCE(u.profile_picture, ''), COALESCE(o.tracking_detail, '')
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        WHERE o.user_id = ?`
 
 	var args []interface{}
 	args = append(args, userID)
@@ -309,16 +474,21 @@ func (r *OrderRepository) GetUserOrdersByStatus(userID int, status string) ([]Or
 	var orders []Order
 	for rows.Next() {
 		var o Order
-		var rawTime string
+		var rawTime, rawCompleted string
 		err := rows.Scan(
-			&o.OrderID, &rawTime, &o.Total, &o.ShippingCost, &o.Status,
+			&o.OrderID, &rawTime, &rawCompleted, &o.Total, &o.ShippingCost, &o.Status,
 			&o.BuyerName, &o.Address, &o.PaymentMethod, &o.PaymentProof,
 			&o.Email, &o.Phone,
 			&o.RefundBank, &o.RefundAccount, &o.RefundName,
-			&o.BuyerProfile,
+			&o.BuyerProfile, &o.TrackingDetail,
 		)
 		if err == nil {
 			o.Date = parseOrderDate(rawTime)
+			if rawCompleted != "" {
+				o.CompletedAt = parseOrderDate(rawCompleted)
+			} else {
+				o.CompletedAt = "-"
+			}
 			items, _ := r.getOrderItems(o.OrderID)
 			o.Items = items
 			orders = append(orders, o)
@@ -329,11 +499,11 @@ func (r *OrderRepository) GetUserOrdersByStatus(userID int, status string) ([]Or
 
 func (r *OrderRepository) CancelExpiredOrders() error {
 	queryGetExpired := `
-		SELECT order_id FROM orders 
-		WHERE status IN ('Diproses', 'Menunggu Pembayaran') 
-		AND payment_method = 'transfer'
-		AND (payment_proof IS NULL OR payment_proof = '') 
-		AND created_at < datetime('now', '-1 day')`
+        SELECT order_id FROM orders 
+        WHERE status IN ('Diproses', 'Menunggu Pembayaran') 
+        AND payment_method = 'transfer'
+        AND (payment_proof IS NULL OR payment_proof = '') 
+        AND created_at < datetime('now', '-1 day')`
 
 	rows, err := r.DB.Query(queryGetExpired)
 	if err != nil {
@@ -359,6 +529,9 @@ func (r *OrderRepository) CancelExpiredOrders() error {
 }
 
 func parseOrderDate(rawTime string) string {
+	if rawTime == "" {
+		return "-"
+	}
 	layouts := []string{"2006-01-02 15:04:05", time.RFC3339, "2006-01-02T15:04:05Z"}
 	var t time.Time
 	var err error
@@ -376,7 +549,7 @@ func parseOrderDate(rawTime string) string {
 
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	if loc == nil {
-		return t.Add(7*time.Hour).Format("02 Jan 2006 15:04") + " WIB"
+		return t.Add(7 * time.Hour).Format("02 Jan 2006 15:04") + " WIB"
 	}
 
 	return t.In(loc).Format("02 Jan 2006 15:04") + " WIB"

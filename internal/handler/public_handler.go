@@ -462,6 +462,17 @@ func (h *PublicHandler) BatalkanPesanan(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if order.Status == "Diproses" {
+		if strings.ToLower(order.PaymentMethod) == "cod" {
+			// COD bisa langsung ajukan pembatalan tanpa form
+			err = h.OrderRepo.AjukanPembatalan(orderID, "", "", "")
+			if err != nil {
+				fmt.Printf("[DEBUG] AjukanPembatalan COD Error: %v\n", err)
+			}
+			http.Redirect(w, r, "/riwayat", http.StatusSeeOther)
+			return
+		}
+
+		// Non-COD tetap wajib isi form
 		if bank == "" || account == "" || name == "" {
 			http.Redirect(w, r, "/riwayat", http.StatusSeeOther)
 			return
@@ -523,59 +534,59 @@ func (h *PublicHandler) SubmitReview(w http.ResponseWriter, r *http.Request) {
 
 func (h *PublicHandler) UpdateFotoProfil(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
-    if !ok {
-        sendJSONError(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	if !ok {
+		sendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    if err := r.ParseMultipartForm(5 << 20); err != nil {
-        sendJSONError(w, "File terlalu besar", http.StatusBadRequest)
-        return
-    }
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		sendJSONError(w, "File terlalu besar", http.StatusBadRequest)
+		return
+	}
 
-    file, header, err := r.FormFile("profile_picture")
-    if err != nil {
-        sendJSONError(w, "Gambar tidak ditemukan", http.StatusBadRequest)
-        return
-    }
-    defer file.Close()
+	file, header, err := r.FormFile("profile_picture")
+	if err != nil {
+		sendJSONError(w, "Gambar tidak ditemukan", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
 
-    uploadDir := filepath.Join("static", "uploads", "profile")
-    if err := os.MkdirAll(uploadDir, 0755); err != nil {
-        fmt.Printf("[ERROR] Gagal bikin folder: %v\n", err) 
-        sendJSONError(w, "Server gagal menyiapkan folder penyimpanan", http.StatusInternalServerError)
-        return
-    }
+	uploadDir := filepath.Join("static", "uploads", "profile")
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		fmt.Printf("[ERROR] Gagal bikin folder: %v\n", err)
+		sendJSONError(w, "Server gagal menyiapkan folder penyimpanan", http.StatusInternalServerError)
+		return
+	}
 
-    ext := filepath.Ext(header.Filename)
-    newFileName := fmt.Sprintf("user-%d-%d%s", userID, time.Now().Unix(), ext)
-    dstPath := filepath.Join(uploadDir, newFileName)
+	ext := filepath.Ext(header.Filename)
+	newFileName := fmt.Sprintf("user-%d-%d%s", userID, time.Now().Unix(), ext)
+	dstPath := filepath.Join(uploadDir, newFileName)
 
-    dst, err := os.Create(dstPath)
-    if err != nil {
-        fmt.Printf("[ERROR] Gagal buat file: %v\n", err)
-        sendJSONError(w, "Gagal membuat file di server", http.StatusInternalServerError)
-        return
-    }
-    defer dst.Close()
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		fmt.Printf("[ERROR] Gagal buat file: %v\n", err)
+		sendJSONError(w, "Gagal membuat file di server", http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
 
-    if _, err := io.Copy(dst, file); err != nil {
-        sendJSONError(w, "Gagal menyimpan isi file", http.StatusInternalServerError)
-        return
-    }
+	if _, err := io.Copy(dst, file); err != nil {
+		sendJSONError(w, "Gagal menyimpan isi file", http.StatusInternalServerError)
+		return
+	}
 
-    dbPath := "/static/uploads/profile/" + newFileName
-    err = h.UserRepo.UpdateProfilePicture(userID, dbPath)
-    if err != nil {
-        sendJSONError(w, "Gagal update database", http.StatusInternalServerError)
-        return
-    }
+	dbPath := "/static/uploads/profile/" + newFileName
+	err = h.UserRepo.UpdateProfilePicture(userID, dbPath)
+	if err != nil {
+		sendJSONError(w, "Gagal update database", http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string]string{
-        "status":   "success",
-        "filePath": dbPath,
-    })
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":   "success",
+		"filePath": dbPath,
+	})
 }
 
 func (h *PublicHandler) DeleteFotoProfil(w http.ResponseWriter, r *http.Request) {

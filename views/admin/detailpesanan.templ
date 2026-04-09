@@ -30,20 +30,20 @@ templ DetailPesanan(order repository.Order) {
 			<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
 			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 			<script>
-				tailwind.config = {
-					theme: {
-						extend: {
-							colors: {
-								'h-gold': '#AD861C',
-							},
-							fontFamily: {
-								'poppins': ['Poppins', 'sans-serif'],
-								'inter': ['Inter', 'sans-serif'],
-							}
-						}
-					}
-				}
-			</script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-gold': '#AD861C',
+                            },
+                            fontFamily: {
+                                'poppins': ['Poppins', 'sans-serif'],
+                                'inter': ['Inter', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+            </script>
 		</head>
 		<body class="bg-gray-50 font-inter min-h-screen pb-20" x-data="{ showImageModal: false }">
 			<div
@@ -162,17 +162,17 @@ templ DetailPesanan(order repository.Order) {
 											<div>
 												<h3 class="font-bold text-black text-sm mb-1">{ item.ProductName }</h3>
 												<p class="text-gray-400 font-medium text-xs">
-													Rp. { fmt.Sprintf("%d", item.Price) } x { fmt.Sprintf("%d", item.Quantity) }
+													Rp. { FormatRibuan(item.Price) } x { fmt.Sprintf("%d", item.Quantity) }
 												</p>
 											</div>
 										</div>
-										<span class="font-bold text-black text-sm">Rp. { fmt.Sprintf("%d", item.Price * item.Quantity) }</span>
+										<span class="font-bold text-black text-sm">Rp. { FormatRibuan(item.Price * item.Quantity) }</span>
 									</div>
 								}
 							</div>
 							<div class="flex justify-end items-center p-4 bg-gray-50 border-t border-gray-300 gap-4">
 								<span class="text-sm font-bold text-black uppercase">Subtotal Produk :</span>
-								<span class="text-sm font-bold text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+								<span class="text-sm font-bold text-black">Rp. { FormatRibuan(order.Total - order.ShippingCost) }</span>
 							</div>
 						</div>
 						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-300">
@@ -208,15 +208,15 @@ templ DetailPesanan(order repository.Order) {
 							<div class="p-5 space-y-4">
 								<div class="flex justify-between text-sm font-medium text-gray-600">
 									<span>Total Harga Produk</span>
-									<span class="text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+									<span class="text-black">Rp. { FormatRibuan(order.Total - order.ShippingCost) }</span>
 								</div>
 								<div class="flex justify-between text-sm font-medium text-gray-600">
 									<span>Ongkos Kirim</span>
-									<span class="text-black">Rp. { fmt.Sprintf("%d", order.ShippingCost) }</span>
+									<span class="text-black">Rp. { FormatRibuan(order.ShippingCost) }</span>
 								</div>
 								<div class="pt-4 border-t border-dashed border-gray-300 flex justify-between items-center">
 									<span class="text-sm font-bold text-black uppercase">Total Bayar</span>
-									<span class="text-lg font-bold text-h-gold">Rp. { fmt.Sprintf("%d", order.Total) }</span>
+									<span class="text-lg font-bold text-h-gold">Rp. { FormatRibuan(order.Total) }</span>
 								</div>
 							</div>
 						</div>

@@ -7,6 +7,21 @@ import (
 	"time"
 )
 
+func FormatRibuan(n interface{}) string {
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return s
+	}
+	res := ""
+	for i, v := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			res += "."
+		}
+		res += string(v)
+	}
+	return res
+}
+
 templ Dashboard(data repository.DashboardStats) {
 	@layouts.BaseAdmin("Dashboard", "dashboard") {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -15,7 +30,7 @@ templ Dashboard(data repository.DashboardStats) {
 					<i class="far fa-eye"></i>
 				</div>
 				<div>
-					<p class="text-2xl font-bold text-gray-800">{ fmt.Sprint(data.TotalPengunjung) }</p>
+					<p class="text-2xl font-bold text-gray-800">{ FormatRibuan(data.TotalPengunjung) }</p>
 					<p class="text-gray-500 text-xs font-medium mt-1">Total Pengunjung</p>
 				</div>
 			</div>
@@ -24,7 +39,7 @@ templ Dashboard(data repository.DashboardStats) {
 					<i class="fas fa-money-bill-wave"></i>
 				</div>
 				<div>
-					<p class="text-2xl font-bold text-gray-800">Rp { fmt.Sprintf("%d", data.TotalProfit) }</p>
+					<p class="text-2xl font-bold text-gray-800">Rp { FormatRibuan(data.TotalProfit) }</p>
 					<p class="text-gray-500 text-xs font-medium mt-1">Total Profit</p>
 				</div>
 			</div>
@@ -33,7 +48,7 @@ templ Dashboard(data repository.DashboardStats) {
 					<i class="fas fa-archive"></i>
 				</div>
 				<div>
-					<p class="text-2xl font-bold text-gray-800">{ fmt.Sprint(data.TotalPesanan) }</p>
+					<p class="text-2xl font-bold text-gray-800">{ FormatRibuan(data.TotalPesanan) }</p>
 					<p class="text-gray-500 text-xs font-medium mt-1">Total Pesanan</p>
 				</div>
 			</div>
@@ -45,7 +60,7 @@ templ Dashboard(data repository.DashboardStats) {
 						<i class="fas fa-shopping-bag"></i>
 					</div>
 					<div class="text-left">
-						<p class="text-xl font-bold text-gray-800">{ fmt.Sprint(data.TotalProduk) }</p>
+						<p class="text-xl font-bold text-gray-800">{ FormatRibuan(data.TotalProduk) }</p>
 						<p class="text-gray-500 text-xs font-medium">Total Produk</p>
 					</div>
 				</div>
@@ -54,7 +69,7 @@ templ Dashboard(data repository.DashboardStats) {
 						<i class="fas fa-box-open"></i>
 					</div>
 					<div class="text-left">
-						<p class="text-xl font-bold text-gray-800">{ fmt.Sprint(data.ProdukTerjual) }</p>
+						<p class="text-xl font-bold text-gray-800">{ FormatRibuan(data.ProdukTerjual) }</p>
 						<p class="text-gray-500 text-xs font-medium">Total Produk Terjual</p>
 					</div>
 				</div>
@@ -78,7 +93,7 @@ templ Dashboard(data repository.DashboardStats) {
 							for _, s := range data.SalesChart {
 								if s.DayLabel == label {
 									<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-										<span class="text-[10px] font-bold text-orange-500">{ fmt.Sprint(s.Count) }</span>
+										<span class="text-[10px] font-bold text-orange-500">{ FormatRibuan(s.Count) }</span>
 										<div
 											class="w-full bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-md shadow-md hover:brightness-110 transition-all cursor-pointer"
 											style={ fmt.Sprintf("height: %d%%;", s.HeightPercent) }
@@ -108,7 +123,7 @@ templ Dashboard(data repository.DashboardStats) {
 									</div>
 									<div>
 										<p class="text-sm font-bold text-gray-800 group-hover:text-yellow-600 transition">{ prod.Name }</p>
-										<p class="text-[11px] text-gray-400 font-medium">{ fmt.Sprint(prod.Sold) } Terjual</p>
+										<p class="text-[11px] text-gray-400 font-medium">{ FormatRibuan(prod.Sold) } Terjual</p>
 									</div>
 								</div>
 								<span class="text-xs font-bold text-gray-400">#{ fmt.Sprint(i + 1) }</span>
@@ -154,7 +169,7 @@ templ Dashboard(data repository.DashboardStats) {
 									<td class="px-8 py-5 font-bold text-gray-700">{ o.OrderID }</td>
 									<td class="px-8 py-5 text-gray-500">{ o.Date }</td>
 									<td class="px-8 py-5 font-medium text-gray-800">{ o.BuyerName }</td>
-									<td class="px-8 py-5 text-right font-bold text-gray-700">Rp { fmt.Sprintf("%d", o.Total) }</td>
+									<td class="px-8 py-5 text-right font-bold text-gray-700">Rp { FormatRibuan(o.Total) }</td>
 									<td class="px-8 py-5 text-center">
 										switch o.Status {
 											case "Selesai":

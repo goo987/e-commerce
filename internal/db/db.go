@@ -59,9 +59,13 @@ func Open() (*sql.DB, error) {
 		status TEXT DEFAULT 'Diproses',
 		receipt_number TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		completed_at DATETIME,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		refund_bank TEXT,
 		refund_account TEXT,
 		refund_name TEXT,
+		tracking_detail TEXT,
+		tracking_step INTEGER DEFAULT 1,
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	);
 

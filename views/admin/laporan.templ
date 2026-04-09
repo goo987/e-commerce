@@ -51,7 +51,7 @@ templ Laporan(data repository.LaporanData) {
 			tabTransaksi: 1, 
 			perPageTransaksi: 8,
 			tabStok: 1,
-			perPageStok: 5,
+			perPageStok: 6,
 			showDetail: false,
 			selectedOrder: null,
 			totalPageTransaksi() { return Math.ceil(parseInt($el.dataset.totalTransaksi) / this.perPageTransaksi) },
@@ -105,7 +105,7 @@ templ Laporan(data repository.LaporanData) {
 										<td class="px-4 py-3 font-medium">#{ t.OrderID }</td>
 										<td class="px-4 py-3 text-gray-500">{ t.Date }</td>
 										<td class="px-4 py-3 text-gray-800 font-semibold">{ t.BuyerName }</td>
-										<td class="px-4 py-3 font-bold">Rp { fmt.Sprintf("%d", t.Total) }</td>
+										<td class="px-4 py-3 font-bold">Rp { FormatRibuan(t.Total) }</td>
 										<td class="px-4 py-3 text-center">
 											<a href={ templ.SafeURL(fmt.Sprintf("/admin/laporan/detail/%s", t.OrderID)) } class="text-blue-500 hover:text-blue-700">
 												<i class="fas fa-eye"></i>
@@ -164,9 +164,9 @@ templ Laporan(data repository.LaporanData) {
 											</div>
 											<span class="font-semibold text-gray-700 truncate max-w-[120px]">{ s.Name }</span>
 										</td>
-										<td class="px-4 py-2 text-center font-bold text-gray-600">{ fmt.Sprint(s.StokMasuk) }</td>
-										<td class="px-4 py-2 text-center font-bold text-orange-500">{ fmt.Sprint(s.StokTerjual) }</td>
-										<td class="px-4 py-2 text-center font-bold text-green-600">{ fmt.Sprint(s.StokTersisa) }</td>
+										<td class="px-4 py-2 text-center font-bold text-gray-600">{ FormatRibuan(s.StokMasuk) }</td>
+										<td class="px-4 py-2 text-center font-bold text-orange-500">{ FormatRibuan(s.StokTerjual) }</td>
+										<td class="px-4 py-2 text-center font-bold text-green-600">{ FormatRibuan(s.StokTersisa) }</td>
 									</tr>
 								}
 								if len(data.Stok) == 0 {
@@ -216,7 +216,7 @@ templ Laporan(data repository.LaporanData) {
 						for _, s := range data.SalesChart {
 							<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group min-w-0">
 								<span class="text-[9px] font-extrabold text-orange-600 transition-transform group-hover:scale-110">
-									{ fmt.Sprint(s.Count) }
+									{ FormatRibuan(s.Count) }
 								</span>
 								<div
 									class="w-full bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-md shadow-md hover:brightness-110 transition-all cursor-pointer relative"
@@ -243,7 +243,7 @@ templ Laporan(data repository.LaporanData) {
 									<div class="flex flex-col">
 										<span class="text-xs font-extrabold text-gray-800 leading-tight mb-1">{ p.Name }</span>
 										<span class="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold w-fit">
-											{ fmt.Sprint(p.Sold) } Terjual
+											{ FormatRibuan(p.Sold) } Terjual
 										</span>
 									</div>
 								</div>

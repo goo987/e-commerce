@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"strings"
 )
 
 func calculateEstimation(orderDateStr string) string {
@@ -27,6 +28,21 @@ func calculateEstimation(orderDateStr string) string {
 	return est.Format("02 Jan 2006")
 }
 
+func getTrackingList(detail string) []string {
+	if strings.TrimSpace(detail) == "" {
+		return []string{}
+	}
+
+	raw := strings.Split(detail, "|")
+	var clean []string
+	for _, r := range raw {
+		if strings.TrimSpace(r) != "" {
+			clean = append(clean, strings.TrimSpace(r))
+		}
+	}
+	return clean
+}
+
 templ Detail(order repository.Order) {
 	<!DOCTYPE html>
 	<html lang="id">
@@ -39,23 +55,23 @@ templ Detail(order repository.Order) {
 			<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
 			<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 			<script>
-				tailwind.config = {
-					theme: {
-						extend: {
-							colors: {
-								'h-cream': '#FFFEE4',
-								'h-gold': '#AD861C',
-								'h-yellow-soft': '#FFF9A6',
-								'h-footer-bottom': '#FFD18C',
-							},
-							fontFamily: {
-								'poppins': ['Poppins', 'sans-serif'],
-								'inter': ['Inter', 'sans-serif'],
-							}
-						}
-					}
-				}
-			</script>
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                'h-cream': '#FFFEE4',
+                                'h-gold': '#AD861C',
+                                'h-yellow-soft': '#FFF9A6',
+                                'h-footer-bottom': '#FFD18C',
+                            },
+                            fontFamily: {
+                                'poppins': ['Poppins', 'sans-serif'],
+                                'inter': ['Inter', 'sans-serif'],
+                            }
+                        }
+                    }
+                }
+            </script>
 		</head>
 		<body class="bg-white font-inter flex flex-col min-h-screen" x-data="{ uploading: false, message: '', showCancelModal: false }">
 			<template x-if="showCancelModal">
@@ -76,7 +92,7 @@ templ Detail(order repository.Order) {
 												<p class="text-sm text-gray-500 font-medium mb-4">
 													Apakah Anda yakin ingin membatalkan pesanan <span class="font-bold text-black">{ order.OrderID }</span>?
 												</p>
-												if order.Status == "Diproses" {
+												if order.Status == "Diproses" && order.PaymentMethod != "cod" && order.PaymentMethod != "COD" {
 													<div class="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
 														<p class="text-xs text-blue-700 font-bold uppercase tracking-wider">Data Pengembalian Dana (Refund)</p>
 														<div>
@@ -187,17 +203,17 @@ templ Detail(order repository.Order) {
 											<div>
 												<h3 class="font-bold text-black text-sm mb-1">{ item.ProductName }</h3>
 												<p class="text-gray-400 font-medium text-xs">
-													Rp. { fmt.Sprintf("%d", item.Price) } x { fmt.Sprintf("%d", item.Quantity) }
+													Rp. { formatRibuan(item.Price) } x { formatRibuan(item.Quantity) }
 												</p>
 											</div>
 										</div>
-										<span class="font-bold text-black text-sm">Rp. { fmt.Sprintf("%d", item.Price * item.Quantity) }</span>
+										<span class="font-bold text-black text-sm">Rp. { formatRibuan(item.Price * item.Quantity) }</span>
 									</div>
 								}
 							</div>
 							<div class="flex justify-end items-center p-4 bg-gray-50 border-t border-gray-300 gap-4">
 								<span class="text-sm font-bold text-black uppercase">Subtotal Produk :</span>
-								<span class="text-sm font-bold text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+								<span class="text-sm font-bold text-black">Rp. { formatRibuan( order.Total - order.ShippingCost) }</span>
 							</div>
 						</div>
 						if order.Status == "Selesai" {
@@ -288,33 +304,55 @@ templ Detail(order repository.Order) {
 							<div class="p-5 space-y-4">
 								<div class="flex justify-between text-sm font-medium text-gray-600">
 									<span>Harga produk</span>
-									<span class="text-black">Rp. { fmt.Sprintf("%d", order.Total - order.ShippingCost) }</span>
+									<span class="text-black">Rp. { formatRibuan(order.Total - order.ShippingCost) }</span>
 								</div>
 								<div class="flex justify-between text-sm font-medium text-gray-600">
 									<span>Ongkos Kirim</span>
-									<span class="text-black">Rp. { fmt.Sprintf("%d", order.ShippingCost) }</span>
+									<span class="text-black">Rp. { formatRibuan(order.ShippingCost) }</span>
 								</div>
 								<div class="pt-4 border-t border-dashed border-gray-300 flex justify-between items-center">
 									<span class="text-sm font-bold text-black uppercase">Total Pesanan</span>
-									<span class="text-lg font-bold text-black">Rp. { fmt.Sprintf("%d", order.Total) }</span>
+									<span class="text-lg font-bold text-black">Rp. { formatRibuan( order.Total) }</span>
 								</div>
 							</div>
 						</div>
-						<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm">
-							<div class="p-4 border-b border-gray-300">
-								<h4 class="text-sm font-bold text-black uppercase">Pelacakan</h4>
-							</div>
-							<div class="p-5 space-y-4">
-								<div class="flex justify-between text-sm">
-									<span class="text-gray-500 font-medium">No. Resi</span>
-									<span class="font-bold text-black uppercase">ORD-{ order.OrderID }</span>
+
+						if len(order.TrackingDetail) > 0 {
+							<div class="border border-gray-300 rounded-xl bg-white overflow-hidden shadow-sm p-6">
+								<h4 class="text-sm font-bold text-black uppercase mb-6 tracking-wider flex items-center gap-2">
+									<i class="fas fa-map-marker-alt text-h-gold"></i> Riwayat Perjalanan
+								</h4>
+
+								<div class="space-y-6 relative before:absolute before:inset-0 before:ml-2.5 before:w-0.5 before:-translate-x-px before:bg-gray-200">
+									{{ tracking := getTrackingList(order.TrackingDetail) }}
+									if len(tracking) == 0 {
+										{{ tracking = []string{"Pesanan dibuat"} }}
+									}
+									{{ lastIndex := len(tracking) - 1 }}
+									for i, t := range tracking {
+										<div class="relative flex items-center">
+											if i == lastIndex {
+												<div class="absolute left-0 w-5 h-5 rounded-full border-4 border-white shadow-sm bg-blue-500"></div>
+											} else {
+												<div class="absolute left-0 w-5 h-5 rounded-full border-4 border-white shadow-sm bg-gray-300"></div>
+											}
+
+											<div class="ml-8">
+												if i == lastIndex {
+													<p class="text-sm font-bold text-black">{ t }</p>
+												} else {
+													<p class="text-sm text-gray-500">{ t }</p>
+												}
+											</div>
+										</div>
+									}
 								</div>
-								<div class="flex justify-between text-sm">
-									<span class="text-gray-500 font-medium">Status</span>
-									<span class="italic font-bold text-h-gold">{ order.Status }</span>
+								<div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center text-xs">
+									<span class="text-gray-400 font-bold uppercase">No. Resi</span>
+									<span class="text-black font-bold uppercase tracking-tight">ORD-{ order.OrderID }</span>
 								</div>
 							</div>
-						</div>
+						}
 					</div>
 				</div>
 			</main>
