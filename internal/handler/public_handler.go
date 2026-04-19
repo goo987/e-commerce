@@ -153,15 +153,20 @@ func (h *PublicHandler) OrderDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PublicHandler) Home(w http.ResponseWriter, r *http.Request) {
-	products, err := h.ProductRepo.GetAll()
-	if err != nil {
-		http.Error(w, "Gagal memuat produk", http.StatusInternalServerError)
-		return
-	}
+    products, err := h.ProductRepo.GetAll()
+    if err != nil {
+        http.Error(w, "Gagal memuat produk", http.StatusInternalServerError)
+        return
+    }
 
-	_, isLoggedIn := r.Context().Value(middleware.UserIDKey).(int)
+    userID, isLoggedIn := r.Context().Value(middleware.UserIDKey).(int)
 
-	public.Homepage(products, isLoggedIn).Render(r.Context(), w)
+    cartCount := 0
+    if isLoggedIn {
+        cartCount, _ = h.ProductRepo.GetCartCount(userID)
+    }
+
+    public.Homepage(products, isLoggedIn, cartCount).Render(r.Context(), w)
 }
 
 func (h *PublicHandler) ProductDetail(w http.ResponseWriter, r *http.Request) {

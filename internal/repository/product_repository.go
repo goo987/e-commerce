@@ -31,10 +31,10 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 
 func (r *ProductRepository) GetAll() ([]Product, error) {
 	rows, err := r.DB.Query(`
-		SELECT id, name, price, stock, COALESCE(image, ''), sold, COALESCE(description, '')
-		FROM products
-		ORDER BY id DESC
-	`)
+        SELECT id, name, price, stock, COALESCE(image, ''), sold, COALESCE(description, '')
+        FROM products
+        ORDER BY id DESC
+    `)
 	if err != nil {
 		return nil, err
 	}
@@ -55,10 +55,10 @@ func (r *ProductRepository) GetAll() ([]Product, error) {
 func (r *ProductRepository) GetByID(id int) (Product, error) {
 	var p Product
 	err := r.DB.QueryRow(`
-		SELECT id, name, price, stock, COALESCE(image, ''), sold, COALESCE(description, '') 
-		FROM products 
-		WHERE id = ?
-	`, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &p.Image, &p.Sold, &p.Description)
+        SELECT id, name, price, stock, COALESCE(image, ''), sold, COALESCE(description, '') 
+        FROM products 
+        WHERE id = ?
+    `, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &p.Image, &p.Sold, &p.Description)
 
 	if err != nil {
 		return Product{}, err
@@ -68,18 +68,18 @@ func (r *ProductRepository) GetByID(id int) (Product, error) {
 
 func (r *ProductRepository) Create(p *Product) error {
 	_, err := r.DB.Exec(`
-		INSERT INTO products (name, price, stock, image, sold, description)
-		VALUES (?, ?, ?, ?, 0, ?)
-	`, p.Name, p.Price, p.Stock, p.Image, p.Description)
+        INSERT INTO products (name, price, stock, image, sold, description)
+        VALUES (?, ?, ?, ?, 0, ?)
+    `, p.Name, p.Price, p.Stock, p.Image, p.Description)
 	return err
 }
 
 func (r *ProductRepository) Update(p *Product) error {
 	_, err := r.DB.Exec(`
-		UPDATE products
-		SET name = ?, price = ?, stock = ?, image = ?, description = ?
-		WHERE id = ?
-	`, p.Name, p.Price, p.Stock, p.Image, p.Description, p.ID)
+        UPDATE products
+        SET name = ?, price = ?, stock = ?, image = ?, description = ?
+        WHERE id = ?
+    `, p.Name, p.Price, p.Stock, p.Image, p.Description, p.ID)
 	return err
 }
 
@@ -104,10 +104,10 @@ func (r *ProductRepository) GetCartBySelectedIDs(userID int, ids []string) ([]Pr
 	}
 
 	query := fmt.Sprintf(`
-		SELECT p.id, p.name, p.price, p.stock, COALESCE(p.image, ''), c.quantity, COALESCE(p.description, '')
-		FROM cart c
-		JOIN products p ON c.product_id = p.id
-		WHERE c.user_id = ? AND c.product_id IN (%s)`,
+        SELECT p.id, p.name, p.price, p.stock, COALESCE(p.image, ''), c.quantity, COALESCE(p.description, '')
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ? AND c.product_id IN (%s)`,
 		strings.Join(placeholders, ","))
 
 	rows, err := r.DB.Query(query, args...)
@@ -130,10 +130,10 @@ func (r *ProductRepository) GetCartBySelectedIDs(userID int, ids []string) ([]Pr
 
 func (r *ProductRepository) GetCartByUserID(userID int) ([]Product, error) {
 	query := `
-		SELECT p.id, p.name, p.price, p.stock, COALESCE(p.image, ''), c.quantity, COALESCE(p.description, '')
-		FROM cart c
-		JOIN products p ON c.product_id = p.id
-		WHERE c.user_id = ?`
+        SELECT p.id, p.name, p.price, p.stock, COALESCE(p.image, ''), c.quantity, COALESCE(p.description, '')
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ?`
 
 	rows, err := r.DB.Query(query, userID)
 	if err != nil {
@@ -153,12 +153,23 @@ func (r *ProductRepository) GetCartByUserID(userID int) ([]Product, error) {
 	return products, nil
 }
 
+func (r *ProductRepository) GetCartCount(userID int) (int, error) {
+	var count int
+
+	query := `SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_id = ?`
+	err := r.DB.QueryRow(query, userID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *ProductRepository) AddToCart(userID, productID, qty int) error {
 	query := `
-		INSERT INTO cart (user_id, product_id, quantity) 
-		VALUES (?, ?, ?)
-		ON CONFLICT(user_id, product_id) 
-		DO UPDATE SET quantity = quantity + excluded.quantity`
+        INSERT INTO cart (user_id, product_id, quantity) 
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, product_id) 
+        DO UPDATE SET quantity = quantity + excluded.quantity`
 
 	_, err := r.DB.Exec(query, userID, productID, qty)
 	return err

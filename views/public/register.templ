@@ -57,7 +57,7 @@ templ Register(errMsg string, successMsg string) {
 						Sudah punya akun Hostel Mart? 
 						<a href="/login" class="text-brand-gold hover:underline decoration-brand-gold/50 underline-offset-4">Login</a>
 					</p>
-					<form action="/" method="POST" class="space-y-5">
+					<form action="/register" method="POST" class="space-y-5">
 						if errMsg != "" {
 							<div class="p-3 bg-red-500/20 border border-red-500/50 text-red-700 text-xs font-semibold rounded-lg backdrop-blur-md flex items-center gap-2">
 								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

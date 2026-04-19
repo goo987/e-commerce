@@ -123,7 +123,7 @@ func (r *OrderRepository) UpdateTrackingStep(orderID string) error {
 			"Pesanan telah diserahkan ke jasa kirim",
 			"Pesanan telah sampai di DC kota tujuan",
 			"Pesanan sedang diantar ke alamat tujuan",
-			"Pesanan telah sampai ke alamat tujuan",
+			"Pesanan telah sampai ke alamat tujuan dan diterima oleh yang bersangkutan",
 		}
 	} else {
 		steps = []string{
@@ -132,7 +132,7 @@ func (r *OrderRepository) UpdateTrackingStep(orderID string) error {
 			"Pesanan telah sampai di DC provinsi",
 			"Pesanan telah sampai di DC kota",
 			"Pesanan sedang diantar ke alamat tujuan",
-			"Pesanan telah sampai ke alamat tujuan",
+			"Pesanan telah sampai ke alamat tujuan dan diterima oleh yang bersangkutan",
 		}
 	}
 

@@ -1,8 +1,11 @@
 package public
 
-import "e-commerce/internal/repository"
+import (
+	"e-commerce/internal/repository"
+	"strconv"
+)
 
-templ Homepage(products []repository.Product, isLoggedIn bool) {
+templ Homepage(products []repository.Product, isLoggedIn bool, cartCount int) {
 	<!DOCTYPE html>
 	<html lang="id">
 		<head>
@@ -95,6 +98,11 @@ templ Homepage(products []repository.Product, isLoggedIn bool) {
 						if isLoggedIn {
 							<a href="/keranjang" class="hover:text-h-blue transition text-black relative">
 								<i class="fas fa-shopping-cart text-xl"></i>
+								if cartCount > 0 {
+									<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+										{ strconv.Itoa(cartCount) }
+									</span>
+								}
 							</a>
 						} else {
 							<a href="/register" class="hover:text-h-blue transition text-black">
