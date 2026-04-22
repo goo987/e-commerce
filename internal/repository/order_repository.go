@@ -64,6 +64,22 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 	return &OrderRepository{DB: db}
 }
 
+func (r *OrderRepository) CountOrderStatus() (pembatalan int, perluKirim int, err error) {
+	err = r.DB.QueryRow(`
+		SELECT COUNT(*) FROM orders 
+		WHERE status = 'Pengajuan Pembatalan'
+	`).Scan(&pembatalan)
+	if err != nil {
+		return
+	}
+
+	err = r.DB.QueryRow(`
+		SELECT COUNT(*) FROM orders 
+		WHERE status = 'Diproses'
+	`).Scan(&perluKirim)
+	return
+}
+
 func isJabodetabek(address string) bool {
 	addr := strings.ToLower(address)
 	keywords := []string{"jakarta", "bogor", "depok", "tangerang", "bekasi"}

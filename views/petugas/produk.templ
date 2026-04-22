@@ -2,13 +2,14 @@ package petugas
 
 import (
 	"e-commerce/internal/repository"
+	"e-commerce/views/components"
 	"e-commerce/views/layouts"
 	"fmt"
 )
 
-templ Produk(produkList []repository.Product) {
-	@layouts.BasePetugas("Hostel Mart - Produk", "produk") {
-		<div 
+templ Produk(produkList []repository.Product, sidebar components.SidebarData) {
+	@layouts.BasePetugas("Hostel Mart - Produk", "produk", sidebar) {
+		<div
 			x-data="{
 				openModal: false,
 				editModal: false,
@@ -27,17 +28,16 @@ templ Produk(produkList []repository.Product) {
 				<div class="flex justify-between items-center">
 					<h2 class="text-2xl font-bold text-gray-800">Manajemen Produk</h2>
 				</div>
-				
 				<div class="bg-white rounded-2xl border border-gray-200 custom-shadow overflow-hidden">
 					<div class="p-6 flex justify-between items-center border-b border-gray-100 bg-white">
 						<div class="relative w-80">
 							<span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
 								<i class="fas fa-search"></i>
 							</span>
-							<input 
-								type="text" 
-								x-model="search" 
-								placeholder="Cari Produk..." 
+							<input
+								type="text"
+								x-model="search"
+								placeholder="Cari Produk..."
 								class="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-1 focus:ring-brand-gold outline-none transition-all"
 							/>
 						</div>
@@ -45,7 +45,6 @@ templ Produk(produkList []repository.Product) {
 							Tambah Produk <i class="fas fa-plus text-xs"></i>
 						</button>
 					</div>
-
 					<div class="overflow-x-auto">
 						<table class="w-full text-left border-collapse">
 							<thead class="bg-gray-50/50 text-gray-800 text-sm font-bold border-b border-gray-100">
@@ -58,7 +57,7 @@ templ Produk(produkList []repository.Product) {
 							</thead>
 							<tbody class="divide-y divide-gray-100 text-sm">
 								for index, p := range produkList {
-									<tr 
+									<tr
 										x-show={ fmt.Sprintf("'%s'.toLowerCase().includes(search.toLowerCase())", p.Name) }
 										class="hover:bg-yellow-50/30 transition-colors group"
 									>
@@ -119,7 +118,6 @@ templ Produk(produkList []repository.Product) {
 					</div>
 				</div>
 			</div>
-
 			<div x-show="openModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-[60] backdrop-blur-sm" style="display: none;" x-transition>
 				<div @click.away="openModal = false" class="bg-white w-full max-w-lg rounded-3xl p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
 					<div>
@@ -156,7 +154,6 @@ templ Produk(produkList []repository.Product) {
 					</form>
 				</div>
 			</div>
-
 			<div x-show="editModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-[60] backdrop-blur-sm" style="display: none;" x-transition>
 				<div @click.away="editModal = false" class="bg-white w-full max-w-lg rounded-3xl p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
 					<div>

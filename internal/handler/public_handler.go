@@ -33,6 +33,110 @@ func NewPublicHandler(productRepo *repository.ProductRepository, userRepo *repos
 	}
 }
 
+func (h *PublicHandler) AddAddress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		sendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	label := r.FormValue("label")
+	address := r.FormValue("address")
+
+	if address == "" {
+		sendJSONError(w, "Alamat tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
+
+	err := h.UserRepo.AddAddress(userID, label, address)
+	if err != nil {
+		sendJSONError(w, "Gagal menambah alamat", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *PublicHandler) DeleteAddress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		sendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.FormValue("id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		sendJSONError(w, "ID tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	err = h.UserRepo.DeleteAddress(userID, id)
+	if err != nil {
+		sendJSONError(w, "Gagal hapus alamat", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *PublicHandler) SetDefaultAddress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		sendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.FormValue("id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		sendJSONError(w, "ID tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	err = h.UserRepo.SetDefaultAddress(userID, id)
+	if err != nil {
+		sendJSONError(w, "Gagal set default", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *PublicHandler) UpdateAddress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.FormValue("id")
+	label := r.FormValue("label")
+	address := r.FormValue("address")
+
+	if label == "" || address == "" {
+		http.Error(w, "Data tidak lengkap", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	err = h.UserRepo.UpdateAddress(userID, id, label, address)
+	if err != nil {
+		fmt.Println("UpdateAddress error:", err)
+		http.Error(w, "Gagal update alamat", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *PublicHandler) Akun(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 	if !ok {
@@ -46,7 +150,14 @@ func (h *PublicHandler) Akun(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Gagal memuat profil", http.StatusInternalServerError)
 		return
 	}
-	public.Akun(*user).Render(r.Context(), w)
+
+	addresses, err := h.UserRepo.GetUserAddresses(userID)
+	if err != nil {
+		fmt.Printf("[DEBUG] Address Error: %v\n", err)
+		addresses = []map[string]interface{}{}
+	}
+
+	public.Akun(*user, addresses).Render(r.Context(), w)
 }
 
 func (h *PublicHandler) UpdateAkun(w http.ResponseWriter, r *http.Request) {
@@ -153,20 +264,20 @@ func (h *PublicHandler) OrderDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PublicHandler) Home(w http.ResponseWriter, r *http.Request) {
-    products, err := h.ProductRepo.GetAll()
-    if err != nil {
-        http.Error(w, "Gagal memuat produk", http.StatusInternalServerError)
-        return
-    }
+	products, err := h.ProductRepo.GetAll()
+	if err != nil {
+		http.Error(w, "Gagal memuat produk", http.StatusInternalServerError)
+		return
+	}
 
-    userID, isLoggedIn := r.Context().Value(middleware.UserIDKey).(int)
+	userID, isLoggedIn := r.Context().Value(middleware.UserIDKey).(int)
 
-    cartCount := 0
-    if isLoggedIn {
-        cartCount, _ = h.ProductRepo.GetCartCount(userID)
-    }
+	cartCount := 0
+	if isLoggedIn {
+		cartCount, _ = h.ProductRepo.GetCartCount(userID)
+	}
 
-    public.Homepage(products, isLoggedIn, cartCount).Render(r.Context(), w)
+	public.Homepage(products, isLoggedIn, cartCount).Render(r.Context(), w)
 }
 
 func (h *PublicHandler) ProductDetail(w http.ResponseWriter, r *http.Request) {
@@ -274,6 +385,9 @@ func (h *PublicHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 
 	idsParam := r.URL.Query().Get("ids")
 	user, _ := h.UserRepo.GetByID(userID)
+
+	addresses, _ := h.UserRepo.GetUserAddresses(userID)
+
 	selectedIDs := strings.Split(idsParam, ",")
 	products, err := h.ProductRepo.GetCartBySelectedIDs(userID, selectedIDs)
 	if err != nil || len(products) == 0 {
@@ -281,7 +395,7 @@ func (h *PublicHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	public.Checkout(products, *user).Render(r.Context(), w)
+	public.Checkout(products, *user, addresses).Render(r.Context(), w)
 }
 
 func (h *PublicHandler) ProsesCheckout(w http.ResponseWriter, r *http.Request) {
@@ -297,8 +411,41 @@ func (h *PublicHandler) ProsesCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Phone == "" || user.Alamat == "" {
-		sendJSONError(w, "Data user belum lengkap", http.StatusBadRequest)
+	addressIDStr := r.FormValue("address_id")
+
+	var selectedAddress string
+
+	if addressIDStr == "" {
+		selectedAddress, err = h.UserRepo.GetDefaultAddress(userID)
+		if err != nil || selectedAddress == "" {
+			sendJSONError(w, "Pilih alamat pengiriman", http.StatusBadRequest)
+			return
+		}
+	} else {
+		addressID, err := strconv.Atoi(addressIDStr)
+		if err != nil {
+			sendJSONError(w, "Alamat tidak valid", http.StatusBadRequest)
+			return
+		}
+
+		query := `
+			SELECT label, address 
+			FROM addresses 
+			WHERE id = ? AND user_id = ?
+		`
+
+		var label, addr string
+		err = h.UserRepo.DB.QueryRow(query, addressID, userID).Scan(&label, &addr)
+		if err != nil {
+			sendJSONError(w, "Alamat tidak ditemukan", http.StatusBadRequest)
+			return
+		}
+
+		selectedAddress = fmt.Sprintf("%s - %s - %s", label, user.Phone, addr)
+	}
+
+	if user.Phone == "" {
+		sendJSONError(w, "Nomor HP belum diisi", http.StatusBadRequest)
 		return
 	}
 
@@ -309,7 +456,11 @@ func (h *PublicHandler) ProsesCheckout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	selectedIDs := strings.Split(idsParam, ",")
-	cartItems, _ := h.ProductRepo.GetCartBySelectedIDs(userID, selectedIDs)
+	cartItems, err := h.ProductRepo.GetCartBySelectedIDs(userID, selectedIDs)
+	if err != nil || len(cartItems) == 0 {
+		sendJSONError(w, "Keranjang kosong", http.StatusBadRequest)
+		return
+	}
 
 	var orderItems []repository.OrderItemInput
 	subtotal := 0
@@ -317,6 +468,7 @@ func (h *PublicHandler) ProsesCheckout(w http.ResponseWriter, r *http.Request) {
 
 	for _, p := range cartItems {
 		subtotal += (p.Price * p.CartQty)
+
 		orderItems = append(orderItems, repository.OrderItemInput{
 			ProductID: p.ID,
 			Quantity:  p.CartQty,
@@ -325,6 +477,11 @@ func (h *PublicHandler) ProsesCheckout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	paymentMethod := r.FormValue("payment_method")
+	if paymentMethod == "" {
+		sendJSONError(w, "Pilih metode pembayaran", http.StatusBadRequest)
+		return
+	}
+
 	status := "Menunggu Pembayaran"
 	if paymentMethod == "cod" {
 		status = "Diproses"
@@ -338,7 +495,7 @@ func (h *PublicHandler) ProsesCheckout(w http.ResponseWriter, r *http.Request) {
 	input := repository.CreateOrderInput{
 		UserID:        userID,
 		BuyerName:     user.Username,
-		Address:       user.Alamat,
+		Address:       selectedAddress,
 		Phone:         user.Phone,
 		Email:         email,
 		PaymentMethod: paymentMethod,

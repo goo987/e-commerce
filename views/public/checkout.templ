@@ -15,7 +15,7 @@ func sumSubtotal(products []repository.Product) int {
 	return total
 }
 
-templ Checkout(selectedProducts []repository.Product, user repository.User) {
+templ Checkout(selectedProducts []repository.Product, user repository.User, addresses []map[string]interface{}) {
 	{{
 		subtotal := sumSubtotal(selectedProducts)
 		ongkir := 20000
@@ -26,6 +26,14 @@ templ Checkout(selectedProducts []repository.Product, user repository.User) {
 			idList = append(idList, strconv.Itoa(p.ID))
 		}
 		selectedIdsJoined := strings.Join(idList, ",")
+
+		var defaultAddress map[string]interface{}
+		for _, addr := range addresses {
+			if addr["is_default"] == true {
+				defaultAddress = addr
+				break
+			}
+		}
 	}}
 	<!DOCTYPE html>
 	<html lang="id">
@@ -75,6 +83,21 @@ templ Checkout(selectedProducts []repository.Product, user repository.User) {
 
                 async handleCheckout() {
                     if (!this.paymentMethod) return;
+
+                    // 1. Validasi Alamat (Sekarang cek hidden input)
+                    const addressInput = this.$el.querySelector('input[name=&quot;address_id&quot;]');
+                    if (!addressInput || !addressInput.value) {
+                        this.warningMessage = 'Alamat utama tidak ditemukan. Silakan atur alamat default di profil.';
+                        this.showWarningModal = true;
+                        return;
+                    }
+
+                    // 2. Validasi Nomor Telepon
+                    if (!this.$refs.phoneInput.value) {
+                        this.warningMessage = 'Nomor telepon harus diisi di profil Anda sebelum melakukan checkout.';
+                        this.showWarningModal = true;
+                        return;
+                    }
                     
                     this.isLoading = true;
                     const formData = new FormData(this.$refs.checkoutForm);
@@ -157,7 +180,7 @@ templ Checkout(selectedProducts []repository.Product, user repository.User) {
 					<p class="text-gray-500 mb-8 text-sm" x-text="warningMessage"></p>
 					<div class="space-y-3">
 						<a href="/akun" class="block w-full bg-h-blue-btn text-white font-bold py-4 rounded-2xl transition-all">
-							Lengkapi Profil
+							Lengkapkan Profil / Alamat
 						</a>
 						<button @click="showWarningModal = false" class="block w-full bg-gray-100 text-gray-600 font-bold py-4 rounded-2xl transition-all">
 							Tutup
@@ -206,13 +229,33 @@ templ Checkout(selectedProducts []repository.Product, user repository.User) {
 								</div>
 								<div>
 									<label class="block font-bold text-gray-700 mb-3 ml-1">Alamat Pengiriman</label>
-									<textarea x-ref="alamatInput" name="alamat" readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 h-32 resize-none font-medium text-gray-600 cursor-not-allowed outline-none">{ user.Alamat }</textarea>
-									if user.Alamat == "" {
-										<div class="flex items-center gap-2 text-red-500 text-xs mt-3 ml-1 font-medium bg-red-50 p-3 rounded-xl">
-											<i class="fas fa-exclamation-circle"></i>
-											<span>Alamat pengiriman kosong. Harap lengkapi di menu profil.</span>
-										</div>
-									}
+									<div class="space-y-3">
+										if defaultAddress != nil {
+											<div class="border border-gray-200 rounded-2xl p-5 bg-gray-50 flex items-start gap-4 cursor-not-allowed">
+												<div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-h-gold shadow-sm flex-shrink-0">
+													<i class="fas fa-location-dot"></i>
+												</div>
+												<div class="space-y-1">
+													<p class="font-bold text-sm text-gray-800">
+														{ defaultAddress["label"].(string) }
+													</p>
+													<p class="text-xs text-gray-500 leading-relaxed">
+														{ defaultAddress["address"].(string) }
+													</p>
+												</div>
+											</div>
+											<input
+												type="hidden"
+												name="address_id"
+												value={ fmt.Sprintf("%v", defaultAddress["id"]) }
+											/>
+										} else {
+											<div class="flex items-center gap-2 text-red-500 text-xs mt-1 ml-1 font-medium bg-red-50 p-4 rounded-xl">
+												<i class="fas fa-exclamation-circle"></i>
+												<span>Belum ada alamat utama. Silakan atur di menu profil.</span>
+											</div>
+										}
+									</div>
 								</div>
 								<div>
 									<label class="block font-bold text-gray-700 mb-4 ml-1">Metode Pembayaran</label>
@@ -230,7 +273,7 @@ templ Checkout(selectedProducts []repository.Product, user repository.User) {
 													<p class="text-[10px] text-gray-500">Verifikasi manual</p>
 												</div>
 											</div>
-											<input type="radio" name="payment_method" value="transfer" x-model="paymentMethod" required class="w-5 h-5 accent-h-blue-btn"/>
+											<input type="radio" name="payment_method" value="transfer" x-model="paymentMethod" class="w-5 h-5 accent-h-blue-btn"/>
 										</label>
 										<label
 											class="relative flex items-center justify-between border-2 rounded-2xl p-5 cursor-pointer transition-all hover:bg-gray-50"
@@ -245,20 +288,20 @@ templ Checkout(selectedProducts []repository.Product, user repository.User) {
 													<p class="text-[10px] text-gray-500">Tunai saat barang sampai</p>
 												</div>
 											</div>
-											<input type="radio" name="payment_method" value="cod" x-model="paymentMethod" required class="w-5 h-5 accent-h-blue-btn"/>
+											<input type="radio" name="payment_method" value="cod" x-model="paymentMethod" class="w-5 h-5 accent-h-blue-btn"/>
 										</label>
 									</div>
 								</div>
 								<button
 									type="submit"
 									class="w-full bg-h-blue-btn hover:bg-blue-700 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all active:scale-[0.98] text-lg disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
-									disabled?={ user.Alamat == "" || user.Phone == "" }
+									disabled?={ user.Phone == "" || defaultAddress == nil }
 									:disabled="!paymentMethod || isLoading"
 								>
 									<template x-if="!isLoading">
 										<div class="flex items-center gap-2">
 											<i class="fas fa-shield-check text-sm opacity-50"></i>
-											<span x-text="paymentMethod === 'transfer' ? 'Bayar Sekarang' : 'Konfirmasi Pesanan'"></span>
+											<span x-text="paymentMethod === 'transfer' ? 'Bayar Sekarang' : (paymentMethod === 'cod' ? 'Konfirmasi Pesanan' : 'Pilih Pembayaran')"></span>
 										</div>
 									</template>
 									<div x-show="isLoading" class="flex items-center gap-2" x-cloak>
