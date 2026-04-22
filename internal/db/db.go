@@ -34,6 +34,16 @@ func Open() (*sql.DB, error) {
 		profile_picture TEXT
 	);
 
+	CREATE TABLE IF NOT EXISTS addresses (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER,
+	label TEXT,
+	address TEXT,
+	is_default INTEGER DEFAULT 0,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id)
+	);
+
 	CREATE TABLE IF NOT EXISTS products (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT NOT NULL,

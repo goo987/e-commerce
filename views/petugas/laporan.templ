@@ -2,33 +2,30 @@ package petugas
 
 import (
 	"e-commerce/internal/repository"
+	"e-commerce/views/components"
 	"e-commerce/views/layouts"
 	"fmt"
 	"time"
 )
 
-templ Laporan(data repository.LaporanData) {
-	@layouts.BasePetugas("Laporan", "laporan") {
+templ Laporan(data repository.LaporanData, sidebar components.SidebarData) {
+	@layouts.BasePetugas("Laporan", "laporan", sidebar) {
 		<style>
 			@media print {
-				/* Memaksa browser mencetak warna latar belakang dan gradient */
 				* {
 					-webkit-print-color-adjust: exact !important;
 					print-color-adjust: exact !important;
 					color-adjust: exact !important;
 				}
 
-				/* Sembunyikan sidebar, header, dan elemen navigasi lainnya */
 				body * {
 					visibility: hidden;
 				}
 
-				/* Tampilkan hanya area statistik */
 				#print-area, #print-area * {
 					visibility: visible;
 				}
 
-				/* Atur posisi area cetak ke pojok kiri atas */
 				#print-area {
 					position: absolute;
 					left: 0;
@@ -40,14 +37,14 @@ templ Laporan(data repository.LaporanData) {
 					margin: 0 !important;
 				}
 
-				/* Sembunyikan tombol filter dan tombol unduh saat dicetak */
 				.no-print {
 					display: none !important;
 				}
 			}
 		</style>
-
-		<div class="space-y-6" x-data="{ 
+		<div
+			class="space-y-6"
+			x-data="{ 
 			tabTransaksi: 1, 
 			perPageTransaksi: 8,
 			tabStok: 1,
@@ -75,10 +72,10 @@ templ Laporan(data repository.LaporanData) {
 				document.body.appendChild(downloadLink);
 				downloadLink.click();
 			}
-		}" 
-		data-total-transaksi={ fmt.Sprint(len(data.Transaksi)) }
-		data-total-stok={ fmt.Sprint(len(data.Stok)) }>
-			
+		}"
+			data-total-transaksi={ fmt.Sprint(len(data.Transaksi)) }
+			data-total-stok={ fmt.Sprint(len(data.Stok)) }
+		>
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				<div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
 					<div class="p-5 flex justify-between items-center border-b border-gray-50">
@@ -100,8 +97,10 @@ templ Laporan(data repository.LaporanData) {
 							</thead>
 							<tbody class="divide-y divide-gray-50">
 								for i, t := range data.Transaksi {
-									<tr class="hover:bg-gray-50/50 transition-colors" 
-										x-show={ fmt.Sprintf("%d >= (tabTransaksi-1)*perPageTransaksi && %d < tabTransaksi*perPageTransaksi", i, i) }>
+									<tr
+										class="hover:bg-gray-50/50 transition-colors"
+										x-show={ fmt.Sprintf("%d >= (tabTransaksi-1)*perPageTransaksi && %d < tabTransaksi*perPageTransaksi", i, i) }
+									>
 										<td class="px-4 py-3 font-medium">#{ t.OrderID }</td>
 										<td class="px-4 py-3 text-gray-500">{ t.Date }</td>
 										<td class="px-4 py-3 text-gray-800 font-semibold">{ t.BuyerName }</td>
@@ -124,16 +123,19 @@ templ Laporan(data repository.LaporanData) {
 					<div class="p-3 flex justify-between items-center border-t border-gray-50">
 						<span class="text-[10px] text-gray-500">Hal <span x-text="tabTransaksi"></span> dari <span x-text="totalPageTransaksi()"></span></span>
 						<div class="flex gap-1">
-							<button @click="if(tabTransaksi > 1) tabTransaksi--" 
-									:class="tabTransaksi <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
-									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-left"></i></button>
-							<button @click="if(tabTransaksi < totalPageTransaksi()) tabTransaksi++" 
-									:class="tabTransaksi >= totalPageTransaksi() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
-									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-right"></i></button>
+							<button
+								@click="if(tabTransaksi > 1) tabTransaksi--"
+								:class="tabTransaksi <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+								class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"
+							><i class="fas fa-chevron-left"></i></button>
+							<button
+								@click="if(tabTransaksi < totalPageTransaksi()) tabTransaksi++"
+								:class="tabTransaksi >= totalPageTransaksi() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+								class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"
+							><i class="fas fa-chevron-right"></i></button>
 						</div>
 					</div>
 				</div>
-
 				<div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
 					<div class="p-5 flex justify-between items-center border-b border-gray-50">
 						<h3 class="font-bold text-gray-800">Laporan Stok</h3>
@@ -180,17 +182,20 @@ templ Laporan(data repository.LaporanData) {
 					<div class="p-3 flex justify-between items-center border-t border-gray-50">
 						<span class="text-[10px] text-gray-500">Hal <span x-text="tabStok"></span> dari <span x-text="totalPageStok()"></span></span>
 						<div class="flex gap-1">
-							<button @click="if(tabStok > 1) tabStok--" 
-									:class="tabStok <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
-									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-left"></i></button>
-							<button @click="if(tabStok < totalPageStok()) tabStok++" 
-									:class="tabStok >= totalPageStok() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
-									class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"><i class="fas fa-chevron-right"></i></button>
+							<button
+								@click="if(tabStok > 1) tabStok--"
+								:class="tabStok <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+								class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"
+							><i class="fas fa-chevron-left"></i></button>
+							<button
+								@click="if(tabStok < totalPageStok()) tabStok++"
+								:class="tabStok >= totalPageStok() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+								class="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-[10px]"
+							><i class="fas fa-chevron-right"></i></button>
 						</div>
 					</div>
 				</div>
 			</div>
-
 			<div id="print-area" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6" x-data="{ currentPeriod: new URLSearchParams(window.location.search).get('period') || 'weekly' }">
 				<div class="flex justify-between items-center mb-6">
 					<h3 class="font-bold text-gray-800">Statistik Penjualan { time.Now().Format("2006") }</h3>
@@ -206,7 +211,6 @@ templ Laporan(data repository.LaporanData) {
 						</button>
 					</div>
 				</div>
-
 				<div class="h-80 bg-brand-orange-soft/30 rounded-xl p-6 relative flex items-end justify-between gap-1 md:gap-3 lg:gap-4 overflow-hidden">
 					if len(data.SalesChart) == 0 {
 						<div class="absolute inset-0 flex items-center justify-center">
@@ -221,14 +225,12 @@ templ Laporan(data repository.LaporanData) {
 								<div
 									class="w-full bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-md shadow-md hover:brightness-110 transition-all cursor-pointer relative"
 									style={ fmt.Sprintf("height: %d%%;", s.HeightPercent) }
-								>
-								</div>
+								></div>
 								<span class="text-[9px] text-gray-400 font-bold uppercase truncate w-full text-center">{ s.DayLabel }</span>
 							</div>
 						}
 					}
 				</div>
-
 				<div class="mt-8 border-t border-gray-50 pt-6">
 					<h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
 						<i class="fas fa-crown text-yellow-500"></i> 6 Produk Terlaris

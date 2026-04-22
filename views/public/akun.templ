@@ -3,21 +3,21 @@ package public
 import "e-commerce/internal/repository"
 import "fmt"
 
-templ Akun(user repository.User) {
-    <!DOCTYPE html>
-    <html lang="id">
-        <head>
-            <meta charset="UTF-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-            <title>Profil Akun - Hostel Mart</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-            <link rel="preconnect" href="https://fonts.googleapis.com"/>
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-            <script>
+templ Akun(user repository.User, addresses []map[string]interface{}) {
+	<!DOCTYPE html>
+	<html lang="id">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Profil Akun - Hostel Mart</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+			<script>
                 tailwind.config = {
                     theme: {
                         extend: {
@@ -38,7 +38,7 @@ templ Akun(user repository.User) {
                     }
                 }
             </script>
-            <style>
+			<style>
                 body { font-family: 'Inter', sans-serif; }
                 .search-placeholder::placeholder { color: #AD861C; opacity: 0.8; }
                 .box-shadow-custom { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
@@ -98,10 +98,10 @@ templ Akun(user repository.User) {
                     box-shadow: 0 0 0 3px rgba(173, 134, 28, 0.2) !important;
                 }
             </style>
-        </head>
-        <body
-            class="bg-gray-50 text-gray-800 min-h-screen flex flex-col"
-            x-data={ `{
+		</head>
+		<body
+			class="bg-gray-50 text-gray-800 min-h-screen flex flex-col"
+			x-data="{
                 triggerUpload() {
                     this.$refs.fileInput.click();
                 },
@@ -110,74 +110,74 @@ templ Akun(user repository.User) {
                     if (!file) return;
 
                     const formData = new FormData();
-                    formData.append("profile_picture", file);
+                    formData.append('profile_picture', file);
 
                     try {
                         Swal.fire({ title: 'Mengunggah...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                        let resp = await fetch("/akun/update-photo", { method: "POST", body: formData });
+                        let resp = await fetch('/akun/update-photo', { method: 'POST', body: formData });
                         let result = await resp.json();
                         
                         if (resp.ok) {
                             Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Foto profil diperbarui', timer: 1500, showConfirmButton: false })
                             .then(() => location.reload());
                         } else {
-                            throw new Error(result.message || "Gagal mengunggah");
+                            throw new Error(result.message || 'Gagal mengunggah');
                         }
                     } catch (e) {
-                        Swal.fire("Error", e.message, "error");
+                        Swal.fire('Error', e.message, 'error');
                     }
                 },
 
                 async deleteProfilePicture() {
                     const confirm = await Swal.fire({
-                    title: "Hapus foto?",
-                    text: "Foto profil akan dihapus",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Ya, hapus",
-                    cancelButtonText: "Batal"
-                });
+                        title: 'Hapus foto?',
+                        text: 'Foto profil akan dihapus',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, hapus',
+                        cancelButtonText: 'Batal'
+                    });
 
-                if (!confirm.isConfirmed) return;
+                    if (!confirm.isConfirmed) return;
 
-                try {
-                    let resp = await fetch("/akun/delete-photo", { method: "POST" });
-                    let result = await resp.json();
+                    try {
+                        let resp = await fetch('/akun/delete-photo', { method: 'POST' });
+                        let result = await resp.json();
 
-                    if (resp.ok) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil',
-                            text: 'Foto dihapus',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => location.reload());
-                    } else {
-                        throw new Error(result.message || "Gagal");
+                        if (resp.ok) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Foto dihapus',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        } else {
+                            throw new Error(result.message || 'Gagal');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', e.message, 'error');
                     }
-                } catch (e) {
-                    Swal.fire("Error", e.message, "error");
-                }
-            },
+                },
                 async handleEdit(field, dbColumn, currentValue) {
                     const { value: newValue } = await Swal.fire({
-                        title: "Edit " + field,
-                        input: "text",
+                        title: 'Edit ' + field,
+                        input: 'text',
                         inputValue: currentValue,
                         showCancelButton: true,
-                        confirmButtonText: "Update",
-                        cancelButtonText: "Batal",
+                        confirmButtonText: 'Update',
+                        cancelButtonText: 'Batal',
                         reverseButtons: true,
 
                         inputValidator: (value) => {
-                            if (!value && dbColumn !== 'alamat' && dbColumn !== 'phone') return "Tidak boleh kosong";
+                            if (!value && dbColumn !== 'phone') return 'Tidak boleh kosong';
 
-                            if (dbColumn === "phone" && value !== "") {
+                            if (dbColumn === 'phone' && value !== '') {
                                 if (!/^[0-9]+$/.test(value)) {
-                                    return "Nomor telp harus berupa angka ";
+                                    return 'Nomor telp harus berupa angka ';
                                 }
                                 if (value.length < 10 || value.length > 13) {
-                                    return "Nomor harus 10-13 digit";
+                                    return 'Nomor harus 10-13 digit';
                                 }
                             }
 
@@ -187,10 +187,10 @@ templ Akun(user repository.User) {
 
                     if (newValue !== undefined && newValue !== currentValue) {
                         let formData = new FormData();
-                        formData.append("field", dbColumn);
-                        formData.append("value", newValue);
+                        formData.append('field', dbColumn);
+                        formData.append('value', newValue);
                         try {
-                            let resp = await fetch("/akun/update", { method: "POST", body: formData });
+                            let resp = await fetch('/akun/update', { method: 'POST', body: formData });
                             if (resp.ok) {
                                 Swal.fire({
                                     icon: 'success',
@@ -201,26 +201,138 @@ templ Akun(user repository.User) {
                                 }).then(() => location.reload());
                             } else { throw new Error(); }
                         } catch(e) { 
-                            Swal.fire("Error", "Gagal mengupdate data, mohon isi data dengan benar", "error"); 
+                            Swal.fire('Error', 'Gagal mengupdate data, mohon isi data dengan benar', 'error'); 
                         }
                     }
                 },
+                async addAddress() {
+                    const { value: form } = await Swal.fire({
+                        title: 'Tambah Alamat',
+                        html: `
+                            <input id='label' class='swal2-input' placeholder='Label (Rumah/Kos)'>
+                            <textarea id='address' class='swal2-input' style='height: 100px !important; padding: 10px !important;' placeholder='Alamat lengkap'></textarea>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Tambah',
+                        cancelButtonText: 'Batal',
+                        focusConfirm: false,
+                        preConfirm: () => {
+                            const label = document.getElementById('label').value.trim();
+                            const address = document.getElementById('address').value.trim();
+
+                            if (!label || !address) {
+                                Swal.showValidationMessage('Semua field wajib diisi');
+                                return false;
+                            }
+
+                            return { label, address };
+                        }
+                    });
+
+                    if (!form) return;
+
+                    let fd = new FormData();
+                    fd.append('label', form.label);
+                    fd.append('address', form.address);
+
+                    let resp = await fetch('/alamat/add', { method: 'POST', body: fd });
+
+                    if (resp.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: 'Alamat ditambahkan',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', 'Gagal tambah alamat', 'error');
+                    }
+                },
+
+                async editAddress(id, currentLabel, currentAddress) {
+                    const { value: form } = await Swal.fire({
+                        title: 'Edit Alamat',
+                        html: `
+                            <input id='edit-label' class='swal2-input' value='${currentLabel}' placeholder='Label (Rumah/Kos)'>
+                            <textarea id='edit-address' class='swal2-input' style='height: 100px !important; padding: 10px !important;' placeholder='Alamat lengkap'>${currentAddress}</textarea>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Update',
+                        cancelButtonText: 'Batal',
+                        focusConfirm: false,
+                        preConfirm: () => {
+                            const label = document.getElementById('edit-label').value.trim();
+                            const address = document.getElementById('edit-address').value.trim();
+                            if (!label || !address) {
+                                Swal.showValidationMessage('Semua field wajib diisi');
+                                return false;
+                            }
+                            return { label, address };
+                        }
+                    });
+
+                    if (!form) return;
+
+                    let fd = new FormData();
+                    fd.append('id', id);
+                    fd.append('label', form.label);
+                    fd.append('address', form.address);
+
+                    let resp = await fetch('/alamat/update', { method: 'POST', body: fd });
+                    if (resp.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: 'Alamat diperbarui',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', 'Gagal update alamat', 'error');
+                    }
+                },
+
+                async deleteAddress(id) {
+                    const confirm = await Swal.fire({
+                        title: 'Hapus Alamat?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Hapus',
+                        cancelButtonText: 'Batal'
+                    });
+                    if (!confirm.isConfirmed) return;
+
+                    await fetch('/alamat/delete', {
+                        method: 'POST',
+                        body: new URLSearchParams({ id })
+                    });
+                    location.reload();
+                },
+
+                async setDefaultAddress(id) {
+                    await fetch('/alamat/set-default', {
+                        method: 'POST',
+                        body: new URLSearchParams({ id })
+                    });
+                    location.reload();
+                },
                 async changePassword() {
                     const { value: pass } = await Swal.fire({
-                        title: "Ubah Password",
-                        input: "password",
-                        inputPlaceholder: "Password baru",
+                        title: 'Ubah Password',
+                        input: 'password',
+                        inputPlaceholder: 'Password baru',
                         showCancelButton: true,
-                        confirmButtonText: "Update",
-                        cancelButtonText: "Batal",
+                        confirmButtonText: 'Update',
+                        cancelButtonText: 'Batal',
                         reverseButtons: true
                     });
                     
                     if (pass) {
                         let formData = new FormData();
-                        formData.append("new_password", pass);
+                        formData.append('new_password', pass);
                         try {
-                            let resp = await fetch("/akun/change-password", { method: "POST", body: formData });
+                            let resp = await fetch('/akun/change-password', { method: 'POST', body: formData });
                             if (resp.ok) {
                                 Swal.fire({
                                     icon: 'success',
@@ -231,216 +343,260 @@ templ Akun(user repository.User) {
                                 });
                             } else { throw new Error(); }
                         } catch(e) {
-                            Swal.fire("Gagal", "Gagal ubah password", "error");
+                            Swal.fire('Gagal', 'Gagal ubah password', 'error');
                         }
                     }
                 },
                 logout() {
                     Swal.fire({
-                        title: "Logout?",
-                        text: "Yakin ingin keluar dari akun Anda?",
-                        icon: "warning",
+                        title: 'Logout?',
+                        text: 'Yakin ingin keluar dari akun Anda?',
+                        icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: "#ef4444",
-                        confirmButtonText: "Ya, Keluar",
-                        cancelButtonText: "Batal",
+                        confirmButtonColor: '#ef4444',
+                        confirmButtonText: 'Ya, Keluar',
+                        cancelButtonText: 'Batal',
                         reverseButtons: true
                     }).then(r => { 
-                        if(r.isConfirmed) window.location.href = "/logout" 
+                        if(r.isConfirmed) window.location.href = '/logout' 
                     });
                 }
-            }` }
-        >
-            <header class="bg-h-cream py-3 px-6 shadow-sm">
-                <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 min-w-fit">
-                        <img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
-                        <span class="text-h-gold font-poppins font-bold text-xl tracking-tight">
-                            HOSTEL MART
-                        </span>
-                    </div>
-                </div>
-            </header>
-            <main class="max-w-6xl mx-auto w-full px-6 py-10 flex-grow">
-                <div class="mb-10">
-                    <a href="/" class="inline-flex items-center gap-2 bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 px-9 py-2.5 rounded-xl font-bold transition text-sm text-black shadow-[0_4px_0_0_rgba(202,138,4,0.2)] active:translate-y-[2px] active:shadow-none">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </a>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-6 font-poppins">Profil Akun</h1>
-                <div class="flex flex-col md:flex-row gap-6 mb-6">
-                    <div class="w-full md:w-1/3">
-                        <div class="bg-white border border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center box-shadow-custom h-full">
-                            <div class="relative mb-6">
-                                <div class="w-28 h-28 bg-[#F8C88A] rounded-full flex items-center justify-center overflow-hidden text-4xl font-bold text-black shadow-inner uppercase font-poppins border-4 border-white ring-2 ring-gray-100">
-                                    if user.ProfilePicture != "" {
-                                        <img src={ user.ProfilePicture } alt="Profile" class="w-full h-full object-cover"/>
-                                    } else {
-                                        if len(user.Username) > 0 {
-                                            { user.Username[0:1] }
-                                        }
-                                    }
-                                </div>
-                                <button
-                                    @click="triggerUpload()"
-                                    class="absolute bottom-0 right-0 bg-h-blue text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-white hover:bg-h-gold transition shadow-md"
-                                >
-                                    <i class="fas fa-camera text-xs"></i>
-                                </button>
-                                <input type="file" x-ref="fileInput" class="hidden" accept="image/*" @change="uploadProfilePicture($event)"/>
-                            </div>
-                            
-                            if user.ProfilePicture != "" {
-                                <button
-                                    @click="deleteProfilePicture()"
-                                    class="mb-4 text-red-500 text-sm hover:underline"
-                                >
-                                    Hapus Foto
-                                </button>
-                            }
-
-                            <h2 class="font-bold text-gray-800 text-lg mb-4 font-poppins">Profil Akun</h2>
-                            <button @click="changePassword()" class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-2 px-6 rounded-lg text-sm transition shadow-sm w-full">
-                                Ubah Password
-                            </button>
-                        </div>
-                    </div>
-                    <div class="w-full md:w-2/3">
-                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden box-shadow-custom h-full">
-                            <div class="bg-gray-50/50 border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                                <h2 class="text-lg font-bold text-gray-800 font-poppins">Halo, { user.Username }!</h2>
-                                <button @click="logout()" class="bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 text-black font-semibold py-1.5 px-6 rounded-lg text-sm transition shadow-sm">
-                                    Logout
-                                </button>
-                            </div>
-                            <div class="p-6 space-y-4">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-gray-50">
-                                    <div class="flex gap-4 items-start sm:items-center w-full">
-                                        <span class="text-gray-500 font-medium w-24">Nama</span>
-                                        <span class="text-gray-800 font-semibold flex-1">{ user.Username }</span>
-                                    </div>
-                                    <button @click={ fmt.Sprintf("handleEdit('Nama', 'username', '%s')", user.Username) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1 px-5 rounded-md text-xs transition">
-                                        Edit
-                                    </button>
-                                </div>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-gray-50">
-                                    <div class="flex gap-4 items-start sm:items-center w-full">
-                                        <span class="text-gray-500 font-medium w-24">Email</span>
-                                        <span class="text-gray-800 font-semibold flex-1">{ user.Email }</span>
-                                    </div>
-                                    <button @click={ fmt.Sprintf("handleEdit('Email', 'email', '%s')", user.Email) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1 px-5 rounded-md text-xs transition">
-                                        Edit
-                                    </button>
-                                </div>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-gray-50">
-                                    <div class="flex gap-4 items-start sm:items-center w-full">
-                                        <span class="text-gray-500 font-medium w-24">No. Telp</span>
-                                        <span class="text-gray-800 font-semibold flex-1">
-                                            if user.Phone != "" {
-                                                { user.Phone }
-                                            } else {
-                                                <span class="text-gray-400 font-normal italic">Belum diatur</span>
-                                            }
-                                        </span>
-                                    </div>
-                                    <button @click={ fmt.Sprintf("handleEdit('Nomor Telepon', 'phone', '%s')", user.Phone) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1 px-5 rounded-md text-xs transition">
-                                        Edit
-                                    </button>
-                                </div>
-                                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 py-2">
-                                    <div class="flex gap-4 items-start w-full">
-                                        <span class="text-gray-500 font-medium w-24 flex-shrink-0">Alamat</span>
-                                        <span class="text-gray-800 font-semibold flex-1 leading-relaxed">
-                                            if user.Alamat != "" {
-                                                { user.Alamat }
-                                            } else {
-                                                <span class="text-gray-400 font-normal italic">Belum diatur</span>
-                                            }
-                                        </span>
-                                    </div>
-                                    <button @click={ fmt.Sprintf("handleEdit('Alamat', 'alamat', '%s')", user.Alamat) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1 px-5 rounded-md text-xs transition">
-                                        Edit
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="w-full">
-                    <a href="/riwayat" class="bg-white border border-gray-200 rounded-2xl p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition box-shadow-custom group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-h-yellow-soft rounded-xl flex items-center justify-center group-hover:bg-h-footer-bottom transition">
-                                <i class="fas fa-clipboard-list text-h-gold text-xl"></i>
-                            </div>
-                            <span class="font-bold text-xl text-gray-800 font-poppins tracking-tight">Riwayat Pesanan</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-400 text-lg group-hover:text-h-gold group-hover:translate-x-1 transition-all"></i>
-                    </a>
-                </div>
-            </main>
-            <footer class="bg-h-cream pt-10 border-t border-gray-100 font-inter">
-                <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
-                    <div class="md:col-span-4">
-                        <div class="flex items-center gap-3 mb-5">
-                            <img src="/image/logo.png" alt="Logo" class="h-12 w-auto"/>
-                            <span class="text-h-gold font-poppins font-bold text-3xl tracking-tight">
-                                HOSTEL MART
-                            </span>
-                        </div>
-                        <p class="text-base text-gray-800 leading-relaxed font-medium mb-8 max-w-sm">
-                            Hostel Mart adalah e-commerce yang mendukung produk lokal dengan sistem 
-                            belanja yang mudah, simple, dan terpercaya
-                        </p>
-                        <p class="text-sm font-semibold text-black">
-                            © HostelMart 2026. All Rights Reserved.
-                        </p>
-                    </div>
-                    <div class="md:col-span-2">
-                        <h4 class="font-poppins font-semibold text-lg text-black mb-5">Layanan</h4>
-                        <ul class="text-base space-y-3 text-gray-700 font-medium">
-                            <li><a href="/tentang-kami" class="hover:text-h-gold transition">Tentang Kami</a></li>
-                            <li><a href="/" class="hover:text-h-gold transition">Produk</a></li>
-                            <li><a href="/keranjang" class="hover:text-h-gold transition">Keranjang</a></li>
-                        </ul>
-                    </div>
-                    <div class="md:col-span-3">
-                        <h4 class="font-poppins font-semibold text-lg text-black mb-5">Bantuan</h4>
-                        <ul class="text-base space-y-3 text-gray-700 font-medium leading-relaxed">
-                            <li><a href="/cara-belanja" class="hover:text-h-gold transition">Cara Belanja</a></li>
-                            <li><a href="/metode-pembayaran" class="hover:text-h-gold transition">Metode Pembayaran</a></li>
-                            <li><a href="/pengiriman" class="hover:text-h-gold transition">Pengiriman</a></li>
-                            <li>
-                                <a href="/syarat-ketentuan" class="hover:text-h-gold transition text-base font-medium leading-relaxed">
-                                    Syarat & Ketentuan dan Kebijakan Privasi
-                                    <span class="text-h-gold font-bold ml-1 text-lg">>></span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="md:col-span-3">
-                        <h4 class="font-poppins font-semibold text-lg text-black mb-5">Hubungi Kami</h4>
-                        <ul class="text-base space-y-3 text-gray-700 font-medium">
-                            <li class="flex items-center gap-3">
-                                <i class="fas fa-envelope text-black"></i>
-                                <span>HostelMart@gmail.com</span>
-                            </li>
-                            <li class="flex items-center gap-3">
-                                <i class="fas fa-phone-alt text-black"></i>
-                                <span>0821-3465-7892</span>
-                            </li>
-                            <li class="flex items-center gap-3">
-                                <i class="fas fa-map-marker-alt text-black"></i>
-                                <span>Indonesia</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="bg-h-footer-bottom py-6 border-t border-black/10">
-                    <p class="text-base font-semibold text-black text-center">
-                        © HostelMart 2026. All Rights Reserved.
-                    </p>
-                </div>
-            </footer>
-        </body>
-    </html>
+            }"
+		>
+			<header class="bg-h-cream py-3 px-6 shadow-sm">
+				<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+					<div class="flex items-center gap-2 min-w-fit">
+						<img src="/image/logo.png" alt="Logo" class="h-10 w-auto"/>
+						<span class="text-h-gold font-poppins font-bold text-xl tracking-tight">
+							HOSTEL MART
+						</span>
+					</div>
+				</div>
+			</header>
+			<main class="max-w-6xl mx-auto w-full px-6 py-10 flex-grow">
+				<div class="mb-10">
+					<a href="/" class="inline-flex items-center gap-2 bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 px-9 py-2.5 rounded-xl font-bold transition text-sm text-black shadow-[0_4px_0_0_rgba(202,138,4,0.2)] active:translate-y-[2px] active:shadow-none">
+						<i class="fas fa-arrow-left"></i> Kembali
+					</a>
+				</div>
+				<h1 class="text-3xl font-bold text-gray-900 mb-6 font-poppins">Profil Akun</h1>
+				<div class="flex flex-col md:flex-row gap-6 mb-6">
+					<div class="w-full md:w-1/3">
+						<div class="bg-white border border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center box-shadow-custom h-full">
+							<div class="relative mb-6">
+								<div class="w-28 h-28 bg-[#F8C88A] rounded-full flex items-center justify-center overflow-hidden text-4xl font-bold text-black shadow-inner uppercase font-poppins border-4 border-white ring-2 ring-gray-100">
+									if user.ProfilePicture != "" {
+										<img src={ user.ProfilePicture } alt="Profile" class="w-full h-full object-cover"/>
+									} else {
+										if len(user.Username) > 0 {
+											{ user.Username[0:1] }
+										}
+									}
+								</div>
+								<button
+									@click="triggerUpload()"
+									class="absolute bottom-0 right-0 bg-h-blue text-white w-9 h-9 rounded-full flex items-center justify-center border-2 border-white hover:bg-h-gold transition shadow-md"
+								>
+									<i class="fas fa-camera text-xs"></i>
+								</button>
+								<input type="file" x-ref="fileInput" class="hidden" accept="image/*" @change="uploadProfilePicture($event)"/>
+							</div>
+							if user.ProfilePicture != "" {
+								<button
+									@click="deleteProfilePicture()"
+									class="mb-4 text-red-500 text-sm hover:underline"
+								>
+									Hapus Foto
+								</button>
+							}
+							<h2 class="font-bold text-gray-800 text-base mb-4 font-poppins">Pengaturan Akun</h2>
+							<button @click="changePassword()" class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-2.5 px-6 rounded-xl text-sm transition shadow-sm w-full">
+								Ubah Password
+							</button>
+						</div>
+					</div>
+					<div class="w-full md:w-2/3">
+						<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden box-shadow-custom h-full">
+							<div class="bg-gray-50/50 border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+								<h2 class="text-lg font-bold text-gray-800 font-poppins">Halo, { user.Username }!</h2>
+								<button @click="logout()" class="bg-h-yellow-soft hover:bg-[#FDF47D] border border-yellow-200 text-black font-semibold py-1.5 px-6 rounded-lg text-sm transition shadow-sm">
+									Logout
+								</button>
+							</div>
+							<div class="p-6 space-y-4">
+								<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-gray-50">
+									<div class="flex gap-4 items-start sm:items-center w-full">
+										<span class="text-gray-500 font-medium w-24 text-sm">Nama</span>
+										<span class="text-gray-800 font-semibold flex-1 text-sm">{ user.Username }</span>
+									</div>
+									<button @click={ fmt.Sprintf("handleEdit('Nama', 'username', `%s`)", user.Username) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1.5 px-5 rounded-lg text-xs transition">
+										Edit
+									</button>
+								</div>
+								<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-gray-50">
+									<div class="flex gap-4 items-start sm:items-center w-full">
+										<span class="text-gray-500 font-medium w-24 text-sm">Email</span>
+										<span class="text-gray-800 font-semibold flex-1 text-sm">{ user.Email }</span>
+									</div>
+									<button @click={ fmt.Sprintf("handleEdit('Email', 'email', `%s`)", user.Email) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1.5 px-5 rounded-lg text-xs transition">
+										Edit
+									</button>
+								</div>
+								<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-gray-50">
+									<div class="flex gap-4 items-start sm:items-center w-full">
+										<span class="text-gray-500 font-medium w-24 text-sm">No. Telp</span>
+										<span class="text-gray-800 font-semibold flex-1 text-sm">
+											if user.Phone != "" {
+												{ user.Phone }
+											} else {
+												<span class="text-gray-400 font-normal italic">Belum diatur</span>
+											}
+										</span>
+									</div>
+									<button @click={ fmt.Sprintf("handleEdit('Nomor Telepon', 'phone', `%s`)", user.Phone) } class="bg-[#F8C88A] hover:bg-[#f3ba74] text-black font-semibold py-1.5 px-5 rounded-lg text-xs transition">
+										Edit
+									</button>
+								</div>
+								<div class="mt-6">
+									<div class="flex justify-between items-center mb-4">
+										<span class="text-gray-500 font-medium text-sm">Alamat Saya</span>
+										if len(addresses) < 3 {
+											<button
+												@click="addAddress()"
+												class="bg-h-blue text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-h-gold transition shadow-sm"
+											>
+												<i class="fas fa-plus mr-1"></i> Tambah
+											</button>
+										}
+									</div>
+									<div class="space-y-3">
+										for _, addr := range addresses {
+											<div
+												class={ "relative border rounded-xl p-4 flex justify-between items-start transition hover:border-gray-300", 
+                                                templ.KV("border-gray-300 bg-h-cream/20", addr["is_default"] == true),
+                                                templ.KV("border-gray-200", addr["is_default"] != true) }
+											>
+												<div class="flex-1">
+													<p class="font-bold text-sm text-h-blue mb-0.5">{ fmt.Sprintf("%v", addr["label"]) }</p>
+													<p class="text-xs text-gray-600 leading-tight">{ fmt.Sprintf("%v", addr["address"]) }</p>
+												</div>
+												<div class="flex flex-col items-end gap-2 shrink-0">
+													<div class="flex gap-3">
+														<button
+															@click={ fmt.Sprintf("editAddress(%v, `%v`, `%v`)", addr["id"], addr["label"], addr["address"]) }
+															class="text-[10px] font-bold text-gray-500 hover:text-h-blue hover:underline"
+														>
+															Edit
+														</button>
+														if addr["is_default"] != true {
+															<button
+																@click={ fmt.Sprintf("setDefaultAddress(%v)", addr["id"]) }
+																class="text-[10px] font-bold text-h-blue hover:underline"
+															>
+																Set Utama
+															</button>
+														}
+														<button
+															@click={ fmt.Sprintf("deleteAddress(%v)", addr["id"]) }
+															class="text-[10px] font-bold text-red-500 hover:underline"
+														>
+															Hapus
+														</button>
+													</div>
+													if addr["is_default"] == true {
+														<span class="bg-h-gold text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase">Utama</span>
+													}
+												</div>
+											</div>
+										}
+									</div>
+									if len(addresses) == 0 {
+										<div class="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+											<p class="text-gray-400 text-sm italic">Belum ada alamat pengiriman</p>
+										</div>
+									}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="w-full">
+					<a href="/riwayat" class="bg-white border border-gray-200 rounded-2xl p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition box-shadow-custom group">
+						<div class="flex items-center gap-4">
+							<div class="w-12 h-12 bg-h-yellow-soft rounded-xl flex items-center justify-center group-hover:bg-h-footer-bottom transition">
+								<i class="fas fa-clipboard-list text-h-gold text-xl"></i>
+							</div>
+							<span class="font-bold text-xl text-gray-800 font-poppins tracking-tight">Riwayat Pesanan</span>
+						</div>
+						<i class="fas fa-chevron-right text-gray-400 text-lg group-hover:text-h-gold group-hover:translate-x-1 transition-all"></i>
+					</a>
+				</div>
+			</main>
+			<footer class="bg-h-cream pt-10 border-t border-gray-100 font-inter">
+				<div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
+					<div class="md:col-span-4">
+						<div class="flex items-center gap-3 mb-5">
+							<img src="/image/logo.png" alt="Logo" class="h-12 w-auto"/>
+							<span class="text-h-gold font-poppins font-bold text-3xl tracking-tight">
+								HOSTEL MART
+							</span>
+						</div>
+						<p class="text-base text-gray-800 leading-relaxed font-medium mb-8 max-w-sm">
+							Hostel Mart adalah e-commerce yang mendukung produk lokal dengan sistem 
+							belanja yang mudah, simple, dan terpercaya
+						</p>
+						<p class="text-sm font-semibold text-black">
+							© HostelMart 2026. All Rights Reserved.
+						</p>
+					</div>
+					<div class="md:col-span-2">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Layanan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li><a href="/tentang-kami" class="hover:text-h-gold transition">Tentang Kami</a></li>
+							<li><a href="/" class="hover:text-h-gold transition">Produk</a></li>
+							<li><a href="/keranjang" class="hover:text-h-gold transition">Keranjang</a></li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Bantuan</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium leading-relaxed">
+							<li><a href="/cara-belanja" class="hover:text-h-gold transition">Cara Belanja</a></li>
+							<li><a href="/metode-pembayaran" class="hover:text-h-gold transition">Metode Pembayaran</a></li>
+							<li><a href="/pengiriman" class="hover:text-h-gold transition">Pengiriman</a></li>
+							<li>
+								<li>
+									<a href="/syarat-ketentuan" class="hover:text-h-gold transition text-base font-medium leading-relaxed">
+										Syarat & Ketentuan dan Kebijakan Privasi
+										<span class="text-h-gold font-bold ml-1 text-lg">>></span>
+									</a>
+								</li>
+							</li>
+						</ul>
+					</div>
+					<div class="md:col-span-3">
+						<h4 class="font-poppins font-semibold text-lg text-black mb-5">Hubungi Kami</h4>
+						<ul class="text-base space-y-3 text-gray-700 font-medium">
+							<li class="flex items-center gap-3">
+								<i class="fas fa-envelope text-black"></i>
+								<span>HostelMart@gmail.com</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-phone-alt text-black"></i>
+								<span>0821-3465-7892</span>
+							</li>
+							<li class="flex items-center gap-3">
+								<i class="fas fa-map-marker-alt text-black"></i>
+								<span>Indonesia</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="bg-h-footer-bottom py-6 border-t border-black/10">
+					<p class="text-base font-semibold text-black text-center">
+						© HostelMart 2026. All Rights Reserved.
+					</p>
+				</div>
+			</footer>
+		</body>
+	</html>
 }

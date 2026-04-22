@@ -2,6 +2,7 @@ package petugas
 
 import (
 	"e-commerce/internal/repository"
+	"e-commerce/views/components"
 	"e-commerce/views/layouts"
 	"fmt"
 	"time"
@@ -22,8 +23,8 @@ func FormatRibuan(n interface{}) string {
 	return res
 }
 
-templ Dashboard(data repository.DashboardStats) {
-	@layouts.BasePetugas("Dashboard Petugas", "dashboard") {
+templ Dashboard(data repository.DashboardStats, sidebar components.SidebarData) {
+	@layouts.BasePetugas("Dashboard Petugas", "dashboard", sidebar) {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 			<div class="bg-white p-5 rounded-2xl border border-gray-200 custom-shadow flex items-center gap-5 relative overflow-hidden">
 				<div class="w-14 h-14 bg-brand-orange-soft rounded-2xl flex items-center justify-center text-orange-400 text-2xl">

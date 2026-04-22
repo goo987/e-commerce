@@ -3,6 +3,7 @@ package handler
 import (
 	"e-commerce/internal/repository"
 	"e-commerce/views"
+	"e-commerce/views/components"
 	"e-commerce/views/petugas"
 	"fmt"
 	"io"
@@ -44,7 +45,13 @@ func (h *PetugasHandler) PetugasDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = petugas.Dashboard(stats).Render(r.Context(), w)
+	pembatalan, perluKirim, _ := h.OrderRepo.CountOrderStatus()
+	sidebar := components.SidebarData{
+		Pembatalan: pembatalan,
+		PerluKirim: perluKirim,
+	}
+
+	err = petugas.Dashboard(stats, sidebar).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Gagal merender halaman dashboard", http.StatusInternalServerError)
 	}
@@ -62,7 +69,13 @@ func (h *PetugasHandler) PetugasLaporan(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	petugas.Laporan(data).Render(r.Context(), w)
+	pembatalan, perluKirim, _ := h.OrderRepo.CountOrderStatus()
+	sidebar := components.SidebarData{
+		Pembatalan: pembatalan,
+		PerluKirim: perluKirim,
+	}
+
+	petugas.Laporan(data, sidebar).Render(r.Context(), w)
 }
 
 func (h *PetugasHandler) DetailPesananLaporan(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +102,13 @@ func (h *PetugasHandler) PetugasPesanan(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	petugas.Pesanan(orders).Render(r.Context(), w)
+	pembatalan, perluKirim, _ := h.OrderRepo.CountOrderStatus()
+	sidebar := components.SidebarData{
+		Pembatalan: pembatalan,
+		PerluKirim: perluKirim,
+	}
+
+	petugas.Pesanan(orders, sidebar).Render(r.Context(), w)
 }
 
 func (h *PetugasHandler) DetailPesanan(w http.ResponseWriter, r *http.Request) {
@@ -203,7 +222,13 @@ func (h *PetugasHandler) PetugasUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	petugas.User(userList).Render(r.Context(), w)
+	pembatalan, perluKirim, _ := h.OrderRepo.CountOrderStatus()
+	sidebar := components.SidebarData{
+		Pembatalan: pembatalan,
+		PerluKirim: perluKirim,
+	}
+
+	petugas.User(userList, sidebar).Render(r.Context(), w)
 }
 
 func (h *PetugasHandler) ToggleUserStatus(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +261,13 @@ func (h *PetugasHandler) PetugasProduk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	petugas.Produk(products).Render(r.Context(), w)
+	pembatalan, perluKirim, _ := h.OrderRepo.CountOrderStatus()
+	sidebar := components.SidebarData{
+		Pembatalan: pembatalan,
+		PerluKirim: perluKirim,
+	}
+
+	petugas.Produk(products, sidebar).Render(r.Context(), w)
 }
 
 func (h *PetugasHandler) CreateProduk(w http.ResponseWriter, r *http.Request) {

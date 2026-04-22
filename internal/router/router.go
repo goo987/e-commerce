@@ -91,6 +91,11 @@ func New(
 		user.Post("/akun/change-password", publicH.ChangePassword)
 		user.Post("/akun/update-photo", publicH.UpdateFotoProfil)
 		user.Post("/akun/delete-photo", publicH.DeleteFotoProfil)
+
+		user.Post("/alamat/add", publicH.AddAddress)
+		user.Post("/alamat/update", publicH.UpdateAddress)
+		user.Post("/alamat/delete", publicH.DeleteAddress)
+		user.Post("/alamat/set-default", publicH.SetDefaultAddress)
 	})
 
 	// ADMIN ROUTES
